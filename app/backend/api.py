@@ -18,6 +18,11 @@ class RequestState(BaseModel):
     allow_search: bool
 
 
+@app.get("/")
+def health_check():
+    return {"status": "running", "service": "Multi AI Agent API"}
+
+
 @app.post("/chat")
 def chat_endpoint(request: RequestState):
     logger.info(f"Received request for model: {request.model_name}")
