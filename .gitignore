@@ -2,3 +2,8 @@ venv/
 MULTI_AI_AGENT.egg-info/
 logs/
 .env
+__pycache__/
+*.pyc
+FULL_DOCUMENTATION.md
+langchain-quickstart.md
+langgraph-quickstart.md
