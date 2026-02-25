@@ -1,5 +1,5 @@
 from langchain_groq import ChatGroq
-from langchain_tavily import TavilySearchResults
+from langchain_tavily import TavilySearch
 from langchain.tools import tool
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
@@ -11,7 +11,7 @@ from app.config.settings import settings
 @tool
 def tavily_search(query: str) -> str:
     """Search the web using Tavily for current information."""
-    search = TavilySearchResults(max_results=2)
+    search = TavilySearch(max_results=2)
     results = search.invoke({"query": query})
     return str(results)
 
