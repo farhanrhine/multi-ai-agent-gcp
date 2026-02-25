@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Main application service (FastAPI + Streamlit)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: multi-ai-app
+    ports:
+      - "8501:8501"    # Streamlit Frontend
+      - "9999:9999"    # FastAPI Backend
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+    volumes:
+      - .:/app
+      - /app/.venv
+    networks:
+      - app-network
+    restart: unless-stopped
+    # Uncomment below if you want to run only after dependencies
+    depends_on:
+      - sonarqube
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Jenkins CI/CD service
+  jenkins:
+    build:
+      context: ./custom_jenkins
+      dockerfile: Dockerfile
+    container_name: jenkins-dind
+    privileged: true
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # SonarQube code quality service
+  sonarqube:
+    image: sonarqube:latest
+    container_name: sonarqube-dind
+    ports:
+      - "9000:9000"
+    environment:
+      - SONARQUBE_JDBC_URL=jdbc:h2:tcp://localhost:9092/sonarqubedb
+      - SONARQUBE_JDBC_USERNAME=sonar
+      - SONARQUBE_JDBC_PASSWORD=sonar
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - app-network
+    restart: unless-stopped
+    # Note: For production, use external PostgreSQL database
+
+volumes:
+  jenkins_home:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+
+networks:
+  app-network:
+    driver: bridge

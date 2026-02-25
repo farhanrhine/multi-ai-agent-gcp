@@ -1,0 +1,61 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Python cache and virtual environments
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+.env.local
+
+# Environment variables (security)
+.env
+.env.*.local
+
+# Documentation and logs
+*.md
+logs/
+*.log
+
+# CI/CD
+.github
+.gitlab-ci.yml
+Jenkinsfile
+custom_jenkins/
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov/
+
+# Docker and container files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Node modules (if any frontend build tools)
+node_modules/
+npm-debug.log
+
+# Temporary files
+*.tmp
+.tmp/
+temp/
