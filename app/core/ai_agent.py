@@ -67,5 +67,3 @@ def get_response_from_ai_agents(llm_id: str, query: list, allow_search: bool, sy
 
 
 
-
-

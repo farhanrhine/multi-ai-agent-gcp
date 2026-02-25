@@ -1,19 +1,19 @@
 # 🤖 Multi-AI Agent using Groq & Tavily
 
-A production-ready multi-AI agent application that combines **Groq LLM**, **Tavily Search**, and **LangGraph** for intelligent task execution. Built with **FastAPI** backend and **Streamlit** frontend, deployable on **AWS ECS** or **GCP Cloud Run**.
+A production-ready multi-AI agent application that combines **Groq LLM**, **Tavily Search**, and **LangGraph** for intelligent task execution. Built with **FastAPI** backend and **Streamlit** frontend, deployable on **GCP Cloud Run**.
 
 ---
 
 ## 🌟 Features
 
-✨ **Multi-Model Support** - Switch between various Groq models (Qwen, Llama, Mixtral, Gemma)
-🔍 **Web Search Integration** - Tavily Search for real-time information retrieval
-🏗️ **Agent Architecture** - LangGraph-based multi-agent system
-⚡ **FastAPI Backend** - High-performance REST API
-🎨 **Streamlit Frontend** - Interactive user interface
-🐳 **Docker Ready** - Multi-stage optimized Docker builds
-☁️ **Cloud Deployment** - AWS ECS, GCP Cloud Run, and AWS/GCP Kubernetes support
-🔌 **CI/CD Pipeline** - Jenkins automation with SonarQube integration
+- ✨ **Multi-Model Support** — Switch between Groq models (Qwen, Llama, Mixtral, Gemma)
+- 🔍 **Web Search Integration** — Tavily Search for real-time information retrieval
+- 🏗️ **Agent Architecture** — LangGraph-based multi-agent system with `create_react_agent`
+- ⚡ **FastAPI Backend** — High-performance REST API
+- 🎨 **Streamlit Frontend** — Interactive user interface
+- 🐳 **Docker Ready** — Multi-stage optimized Docker builds
+- ☁️ **GCP Cloud Run** — One-command cloud deployment
+- 🔌 **CI/CD Pipeline** — Jenkins automation with SonarQube integration
 
 ---
 
@@ -21,15 +21,15 @@ A production-ready multi-AI agent application that combines **Groq LLM**, **Tavi
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     User Interface                           │
-│              (Streamlit Frontend - Port 8501)               │
+│                     User Interface                          │
+│              (Streamlit Frontend — Port 8501)               │
 └────────────────────┬────────────────────────────────────────┘
                      │ HTTP Requests
                      ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   FastAPI Backend                            │
-│         (REST API - Port 9999 /chat endpoint)               │
-└────────────┬──────────────────────────┬──────────────────────┘
+│         (REST API — Port 9999 /chat endpoint)               │
+└────────────┬──────────────────────────┬─────────────────────┘
              │                          │
              ▼                          ▼
       ┌─────────────┐          ┌──────────────┐
@@ -41,7 +41,7 @@ A production-ready multi-AI agent application that combines **Groq LLM**, **Tavi
                         │
                 ┌───────▼────────┐
                 │  LangGraph     │
-                │  Multi-Agent   │
+                │  React Agent   │
                 └────────────────┘
 ```
 
@@ -52,10 +52,10 @@ A production-ready multi-AI agent application that combines **Groq LLM**, **Tavi
 ### Prerequisites
 
 - Python 3.12+
-- uv package manager (or pip)
+- [uv](https://docs.astral.sh/uv/) package manager (or pip)
 - Docker & Docker Compose (for containerized deployment)
-- Groq API Key ([Get one here](https://console.groq.com))
-- Tavily API Key ([Get one here](https://tavily.com))
+- [Groq API Key](https://console.groq.com)
+- [Tavily API Key](https://tavily.com)
 
 ### Installation
 
@@ -77,6 +77,7 @@ nano .env  # or use your preferred editor
 ```
 
 **Required environment variables:**
+
 ```env
 GROQ_API_KEY=gsk_your_groq_api_key_here
 TAVILY_API_KEY=tvly-dev_your_tavily_api_key_here
@@ -85,11 +86,13 @@ TAVILY_API_KEY=tvly-dev_your_tavily_api_key_here
 #### 3. Install Dependencies
 
 **Using uv (recommended):**
+
 ```bash
 uv sync
 ```
 
 **Using pip:**
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -103,23 +106,22 @@ python main.py
 ```
 
 Access the application:
-- 🎨 **Streamlit UI**: http://localhost:8501
-- ⚙️ **FastAPI Docs**: http://localhost:9999/docs
-- 🔌 **API Endpoint**: http://localhost:9999/chat
+
+- 🎨 **Streamlit UI**: <http://localhost:8501>
+- ⚙️ **FastAPI Docs**: <http://localhost:9999/docs>
+- 🔌 **API Endpoint**: <http://localhost:9999/chat>
 
 ---
 
 ## 🐳 Docker Deployment
 
-### Build Docker Image
+### Build & Run
 
 ```bash
+# Build image
 docker build -t multi-ai-agent:latest .
-```
 
-### Run with Docker
-
-```bash
+# Run container
 docker run -it \
   -p 8501:8501 \
   -p 9999:9999 \
@@ -128,10 +130,10 @@ docker run -it \
   multi-ai-agent:latest
 ```
 
-### Using Docker Compose (Local Development)
+### Docker Compose (Local Development)
 
 ```bash
-# Start all services
+# Start all services (App + Jenkins + SonarQube)
 docker-compose up -d
 
 # View logs
@@ -142,9 +144,10 @@ docker-compose down
 ```
 
 This starts:
-- 🎨 **App** (Streamlit + FastAPI): http://localhost:8501
-- 🔧 **Jenkins** (CI/CD): http://localhost:8080
-- 📊 **SonarQube** (Code Quality): http://localhost:9000
+
+- 🎨 **App** (Streamlit + FastAPI): <http://localhost:8501>
+- 🔧 **Jenkins** (CI/CD): <http://localhost:8080>
+- 📊 **SonarQube** (Code Quality): <http://localhost:9000>
 
 ---
 
@@ -155,6 +158,7 @@ This starts:
 **POST** `/chat`
 
 Request:
+
 ```json
 {
   "model_name": "llama-3.3-70b-versatile",
@@ -165,6 +169,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "response": "..."
@@ -173,135 +178,131 @@ Response:
 
 ### Supported Models
 
-- `qwen/qwen3-32b`
-- `qwen/qwen3-72b`
-- `llama-3.3-70b-versatile`
-- `mixtral-8x7b-32768`
-- `gemma2-9b-it`
+| Model | Description |
+|-------|-------------|
+| `qwen/qwen3-32b` | Qwen 32B |
+| `qwen/qwen3-72b` | Qwen 72B |
+| `llama-3.3-70b-versatile` | Llama 3.3 70B |
+| `mixtral-8x7b-32768` | Mixtral 8x7B |
+| `gemma2-9b-it` | Gemma 2 9B |
 
 ---
 
-## ☁️ Cloud Deployment
+## ☁️ GCP Cloud Run Deployment
 
-### AWS ECS Fargate
+### Prerequisites
 
-Refer to [FULL_DOCUMENTATION.md](FULL_DOCUMENTATION.md#step-5--final-deployment-stage-with-cloud-provider-and-jenkins) for:
-1. Create ECR repository and ECS cluster
-2. Configure Jenkins pipeline
-3. Deploy to ECS Fargate
-4. Set environment variables
+1. [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) installed
+2. GCP project with billing enabled
+3. Artifact Registry API enabled
+4. Cloud Run API enabled
 
-### GCP Cloud Run
+### Deploy via CLI
 
-Refer to [FULL_DOCUMENTATION.md](FULL_DOCUMENTATION.md#option-b-gcp-cloud-run-deployment) for:
-1. Create Artifact Registry and Cloud Run service
-2. Configure Google Cloud SDK
-3. Deploy via Jenkins
-4. Manage environment variables
+```bash
+# Authenticate
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
 
-### GCP GKE
+# Create Artifact Registry repository
+gcloud artifacts repositories create multi-ai-agent \
+  --repository-format=docker \
+  --location=us-central1
 
-For advanced Kubernetes deployments, see Kubernetes manifests in documentation.
+# Configure Docker
+gcloud auth configure-docker us-central1-docker.pkg.dev
+
+# Build & push
+docker build -t multi-ai-agent:latest .
+docker tag multi-ai-agent:latest us-central1-docker.pkg.dev/YOUR_PROJECT_ID/multi-ai-agent/multi-ai-agent:latest
+docker push us-central1-docker.pkg.dev/YOUR_PROJECT_ID/multi-ai-agent/multi-ai-agent:latest
+
+# Deploy to Cloud Run
+gcloud run deploy multi-ai-agent-service \
+  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/multi-ai-agent/multi-ai-agent:latest \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8501 \
+  --memory 2Gi \
+  --cpu 2 \
+  --set-env-vars GROQ_API_KEY=xxx,TAVILY_API_KEY=xxx
+```
+
+### Deploy via Jenkins CI/CD
+
+The included `Jenkinsfile` automates:
+
+1. **GitHub Integration** — Automatic builds on push
+2. **Code Quality** — SonarQube analysis
+3. **Docker Build** — Multi-stage optimized builds
+4. **Registry Push** — GCP Artifact Registry
+5. **Cloud Deploy** — Automatic deployment to Cloud Run
 
 ---
 
-## 🔄 CI/CD Pipeline
-
-### Jenkins Setup
-
-The project includes automated CI/CD with Jenkins:
-
-1. **GitHub Integration** - Automatic builds on push
-2. **Code Quality** - SonarQube analysis
-3. **Docker Build** - Multi-stage optimized builds
-4. **Registry Push** - AWS ECR or GCP Artifact Registry
-5. **Cloud Deploy** - Automatic deployment to ECS or Cloud Run
-
-**Setup instructions**: See [JENKINS_SETUP.md](JENKINS_SETUP.md)
-
----
-
-## 📖 Documentation
-
-- 📘 **[FULL_DOCUMENTATION.md](FULL_DOCUMENTATION.md)** - Complete AWS/GCP deployment guide
-- 🐳 **[DOCKER_SETUP.md](DOCKER_SETUP.md)** - Docker and Docker Compose configuration
-- 🔧 **[JENKINS_SETUP.md](JENKINS_SETUP.md)** - Jenkins credentials and CI/CD setup
-- ✅ **[DEPLOYMENT_READINESS.md](DEPLOYMENT_READINESS.md)** - Pre-deployment checklist
-
----
-
-## 📂 Project Structure
+## Project Structure
 
 ```
 multi-ai-agent-gcp/
 ├── app/
-│   ├── backend/           # FastAPI server
-│   │   ├── api.py
+│   ├── backend/              # FastAPI server
+│   │   ├── api.py            # REST API endpoints
 │   │   └── __init__.py
-│   ├── frontend/          # Streamlit UI
-│   │   ├── ui.py
+│   ├── frontend/             # Streamlit UI
+│   │   ├── ui.py             # User interface
 │   │   └── __init__.py
-│   ├── common/            # Utilities
-│   │   ├── logger.py
+│   ├── common/               # Shared utilities
+│   │   ├── logger.py         # Logging configuration
 │   │   ├── custom_exception.py
 │   │   └── __init__.py
-│   ├── config/            # Configuration
-│   │   ├── settings.py
+│   ├── config/               # Configuration
+│   │   ├── settings.py       # Environment variables & model list
 │   │   └── __init__.py
-│   ├── core/              # AI agent logic
-│   │   ├── ai_agent.py
+│   ├── core/                 # AI agent logic
+│   │   ├── ai_agent.py       # LangGraph react agent
 │   │   └── __init__.py
-│   ├── main.py
 │   └── __init__.py
-├── custom_jenkins/        # Jenkins Docker image
+├── assets/                   # Project images & diagrams
+│   └── workflow-diagram.png
+├── custom_jenkins/           # Jenkins Docker image
 │   └── Dockerfile
-├── logs/                  # Application logs
-├── Dockerfile             # Multi-stage production build
-├── docker-compose.yml     # Local development
-├── Jenkinsfile            # CI/CD pipeline
-├── pyproject.toml         # Dependencies
-├── uv.lock                # Locked dependencies
-├── main.py                # Entry point
-├── .env.example           # Environment template
+├── Dockerfile                # Multi-stage production build
+├── docker-compose.yml        # Local dev (App + Jenkins + SonarQube)
+├── Jenkinsfile               # CI/CD pipeline (GCP)
+├── pyproject.toml            # Dependencies
+├── uv.lock                   # Locked dependencies
+├── main.py                   # Entry point (starts backend + frontend)
+├── .env.example              # Environment template
 ├── .dockerignore
 ├── .gitignore
-└── README.md              # This file
+└── README.md
 ```
 
 ---
 
 ## 🔐 Security Best Practices
 
-✅ **Never commit `.env`** - Use `.env.example` as template
-✅ **Use environment variables** - For all sensitive configuration
-✅ **Rotate API keys regularly** - Groq and Tavily tokens
-✅ **Use VPC/Security Groups** - When deploying to cloud
-✅ **Enable HTTPS** - For production deployments
-✅ **Monitor logs** - For suspicious activity
+- ✅ **Never commit `.env`** — Use `.env.example` as template
+- ✅ **Use environment variables** — For all sensitive configuration
+- ✅ **Rotate API keys regularly** — Groq and Tavily tokens
+- ✅ **Enable HTTPS** — For production deployments
+- ✅ **Monitor logs** — For suspicious activity
 
 ---
 
 ## 🧪 Testing
 
-### Local Testing
-
 ```bash
-# Test with uv
+# Run locally
 uv run python main.py
 
 # Test with Docker
 docker run -e GROQ_API_KEY=xxx -e TAVILY_API_KEY=xxx multi-ai-agent:latest
 
-# Test with Docker Compose
-docker-compose up -d
-curl http://localhost:9999/docs
-```
-
-### Code Quality
-
-SonarQube analysis is automatically run in Jenkins pipeline. View results at:
-```
-http://localhost:9000/projects
+# Test API endpoint
+curl -X POST http://localhost:9999/chat \
+  -H "Content-Type: application/json" \
+  -d '{"model_name":"llama-3.3-70b-versatile","system_prompt":"You are helpful","messages":["Hello"],"allow_search":false}'
 ```
 
 ---
@@ -310,84 +311,58 @@ http://localhost:9000/projects
 
 ### API Keys Not Found
 
-**Error:** `ValueError: GROQ_API_KEY not set in environment variables`
-
-**Solution:**
-```bash
-# Ensure .env file exists and has API keys
-cat .env
-
-# Or set as shell environment variable
-export GROQ_API_KEY=your_key_here
-export TAVILY_API_KEY=your_key_here
 ```
+ValueError: GROQ_API_KEY not set in environment variables
+```
+
+→ Ensure `.env` exists with valid keys, or set them as shell environment variables.
 
 ### Port Already in Use
 
-**Error:** `Address already in use: ('0.0.0.0', 8501)`
-
-**Solution:**
-```bash
-# Find process using port
-lsof -i :8501
-
-# Kill process
-kill -9 <PID>
-
-# Or use different port
-streamlit run app/frontend/ui.py --server.port 8502
 ```
+Address already in use: ('0.0.0.0', 8501)
+```
+
+→ Kill the process using the port: `lsof -i :8501` then `kill -9 <PID>`
 
 ### Docker Build Fails
 
-**Error:** `ERROR: cannot find module`
-
-**Solution:**
-```bash
-# Rebuild without cache
-docker build --no-cache -t multi-ai-agent:latest .
-
-# Check dependencies
-uv sync
 ```
+ERROR: cannot find module
+```
+
+→ Rebuild without cache: `docker build --no-cache -t multi-ai-agent:latest .`
 
 ### Connection Refused
 
-**Error:** `Connection refused: http://localhost:9999`
-
-**Solution:**
-```bash
-# Ensure backend is running
-# Check if service is on correct host/port
-# In Docker: use service name instead of localhost
-API_URL = "http://app:9999/chat"  # Instead of http://localhost:9999
 ```
+Connection refused: http://localhost:9999
+```
+
+→ Ensure backend is running. In Docker, use service name: `http://app:9999/chat`
 
 ---
 
-## 📊 Performance Optimization
+## 📊 Performance
 
-- **Multi-stage Docker build** - Reduced image size by ~70%
-- **uv package manager** - 45x faster dependency resolution
-- **Connection pooling** - Reuse database/API connections
-- **Async operations** - FastAPI asynchronous request handling
-- **Caching** - Frontend state management in Streamlit
+- **Multi-stage Docker build** — Reduced image size by ~70%
+- **uv package manager** — 45x faster dependency resolution
+- **Async operations** — FastAPI asynchronous request handling
+- **LangGraph React Agent** — Optimized agent execution pipeline
 
 ---
 
 ## 🔄 Development Workflow
 
-1. **Development**: `python main.py` (local development)
-2. **Testing**: `docker-compose up` (test with Docker)
-3. **Build**: `docker build -t multi-ai-agent:latest .` (create image)
-4. **Push**: `docker push <registry>/multi-ai-agent:latest` (to registry)
-5. **Deploy**: Jenkins pipeline automatically handles deployment
+1. **Develop** → `python main.py` (local)
+2. **Test** → `docker-compose up` (containerized)
+3. **Build** → `docker build -t multi-ai-agent:latest .`
+4. **Push** → `docker push <registry>/multi-ai-agent:latest`
+5. **Deploy** → Jenkins pipeline auto-deploys to GCP Cloud Run
 
 ---
 
 ## 📝 Contributing
-
-Contributions are welcome! Please:
 
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature/AmazingFeature`
@@ -403,24 +378,12 @@ This project is open source and available under the MIT License.
 
 ---
 
-## 📞 Support & Contact
-
-For questions or issues:
-
-1. Check [DEPLOYMENT_READINESS.md](DEPLOYMENT_READINESS.md) for common issues
-2. Review logs: `docker-compose logs -f app`
-3. Check SonarQube for code quality: http://localhost:9000
-4. Reference [FULL_DOCUMENTATION.md](FULL_DOCUMENTATION.md) for detailed setup
-
----
-
 ## 🎯 Roadmap
 
-- [ ] Add WebSocket support for real-time streaming
-- [ ] Implement multi-turn conversations storage
-- [ ] Add Redis caching layer
-- [ ] Kubernetes manifests for advanced deployments
-- [ ] Add authentication/authorization
+- [ ] WebSocket support for real-time streaming
+- [ ] Multi-turn conversation memory
+- [ ] Redis caching layer
+- [ ] Authentication & authorization
 - [ ] Performance monitoring dashboard
 - [ ] Custom agent creation interface
 

@@ -47,7 +47,3 @@ def chat_endpoint(request: RequestState):
             detail=f"Failed to generate response: {str(e)}"
         )
 
-    
-
-
-

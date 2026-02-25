@@ -48,7 +48,7 @@ if st.button("Ask Agent") and user_query.strip():
 
         if response.status_code==200:
             agent_response = response.json().get("response","")
-            logger.info("Sucesfully recived response from backend")
+            logger.info("Successfully received response from backend")
 
             st.subheader("Agent Response")
             st.markdown(agent_response.replace("\n","<br>"), unsafe_allow_html=True)

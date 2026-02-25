@@ -1,7 +1,30 @@
+# Virtual environments
 venv/
-MULTI_AI_AGENT.egg-info/
-logs/
-.env
+.venv/
+
+# Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+
+# Docs (personal reference)
 docs/
