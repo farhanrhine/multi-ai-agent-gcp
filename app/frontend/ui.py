@@ -166,6 +166,7 @@ st.markdown("""
 BACKEND_HOST = os.getenv("BACKEND_HOST", "localhost")
 BACKEND_PORT = os.getenv("BACKEND_PORT", "9999")
 API_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}/chat"
+STREAM_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}/chat/stream"
 
 logger.info(f"Connecting to backend at: {API_URL}")
 
@@ -189,8 +190,8 @@ st.markdown("""
     <p>
         <span class="tech-badge">⚡ Groq</span>
         <span class="tech-badge">🔍 Tavily</span>
-        <span class="tech-badge">� LangChain</span>
-        <span class="tech-badge">�🧠 LangGraph</span>
+        <span class="tech-badge">🦜 LangChain</span>
+        <span class="tech-badge">🧠 LangGraph</span>
     </p>
 </div>
 <div class="custom-divider"></div>
@@ -230,26 +231,74 @@ if st.button("⚡ Ask Agent") and user_query.strip():
     }
 
     try:
-        logger.info("Sending request to backend")
+        logger.info("Sending streaming request to backend")
 
-        with st.spinner("Thinking..."):
-            response = requests.post(API_URL, json=payload, timeout=120)
+        st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
+
+        st.markdown(
+            f'<span class="model-badge">{selected_model}</span>',
+            unsafe_allow_html=True
+        )
+
+        # Inject real-time auto-scroll script BEFORE starting the stream
+        st.components.v1.html(
+            """
+            <script>
+            // Use a function that tries multiple known Streamlit scroll container selectors
+            const autoScroll = () => {
+                const selectors = ['.stAppViewMain', '.main', 'section.main', '.stMain'];
+                for (const selector of selectors) {
+                    const container = window.parent.document.querySelector(selector);
+                    if (container) {
+                        container.scrollTo({
+                            top: container.scrollHeight,
+                            behavior: 'auto' // 'auto' is faster and more reliable than 'smooth' during rapid updates
+                        });
+                    }
+                }
+            };
+
+            // Setup MutationObserver on the parent document body to catch new tokens
+            const observer = new MutationObserver(() => {
+                autoScroll();
+            });
+
+            observer.observe(window.parent.document.body, {
+                childList: true,
+                subtree: true
+            });
+
+            // Initial scroll
+            autoScroll();
+
+            // Loop a few times just in case for the first few tokens
+            let count = 0;
+            const interval = setInterval(() => {
+                autoScroll();
+                if (++count > 10) clearInterval(interval);
+            }, 500);
+
+            // Cleanup after 1 minute (max stream duration expectation)
+            setTimeout(() => {
+                observer.disconnect();
+                clearInterval(interval);
+            }, 60000);
+            </script>
+            """,
+            height=0
+        )
+
+        # Stream the response token by token
+        response = requests.post(STREAM_URL, json=payload, stream=True, timeout=120)
 
         if response.status_code == 200:
-            agent_response = response.json().get("response", "")
-            logger.info("Successfully received response from backend")
+            def token_generator():
+                for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+                    if chunk:
+                        yield chunk
 
-            st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
-
-            st.markdown(
-                f'<span class="model-badge">{selected_model}</span>',
-                unsafe_allow_html=True
-            )
-
-            st.markdown(
-                f'<div class="response-box">{agent_response}</div>',
-                unsafe_allow_html=True
-            )
+            st.write_stream(token_generator())
+            logger.info("Successfully streamed response from backend")
         else:
             logger.error(f"Backend error: {response.status_code}")
             st.error(f"Backend returned error (status {response.status_code})")

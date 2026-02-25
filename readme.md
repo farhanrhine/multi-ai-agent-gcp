@@ -9,6 +9,8 @@ A multi-AI agent application powered by a **custom LangGraph StateGraph** agent 
 - ✨ **Multi-Model Support** — Switch between Groq models (Qwen, Llama)
 - 🔍 **Web Search Integration** — Tavily Search for real-time information retrieval
 - 🏗️ **Agent Architecture** — Custom LangGraph `StateGraph` with nodes, edges & conditional routing
+- 🌊 **Real-time Streaming** — Token-by-token response display
+- 📜 **Auto-scroll** — Smooth auto-scrolling during response generation
 - ⚡ **FastAPI Backend** — REST API on port 9999
 - 🎨 **Streamlit Frontend** — Interactive UI on port 8501
 - 🐳 **Docker Ready** — Multi-stage optimized builds
@@ -95,7 +97,7 @@ uv run main.py         # Start app
 
 ---
 
-## � Example Prompts
+## 💡 Example Prompts
 
 Here are some examples to get started. Set the **System Prompt** to define the agent's role, then ask your **Query**.
 
@@ -139,7 +141,7 @@ Here are some examples to get started. Set the **System Prompt** to define the a
 
 ---
 
-## �🐳 Docker
+## 🐳 Docker
 
 ```bash
 # Build & run
@@ -183,6 +185,10 @@ Response:
   "response": "The weather today in..."
 }
 ```
+
+### `POST /chat/stream` — Streaming Chat
+
+Same request body as `/chat`. Returns `text/plain` streamed response (token by token).
 
 **Supported Models:** `qwen/qwen3-32b` · `llama-3.3-70b-versatile`
 
@@ -235,4 +241,4 @@ multi-ai-agent-gcp/
 
 ---
 
-**Built with ❤️ using Groq, Tavily, LangChain, LangGraph, FastAPI, and Streamlit**
+**Built by Farhan with ❤️ using Groq, Tavily, LangChain, LangGraph, FastAPI, and Streamlit**
