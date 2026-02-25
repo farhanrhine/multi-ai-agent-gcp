@@ -1,8 +1,7 @@
 from langchain_groq import ChatGroq
-from langchain_community.tools.tavily_search import TavilySearchResults
-
+from langchain_tavily import TavilySearchResults
 from langgraph.prebuilt import create_react_agent
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from app.config.settings import settings
 
@@ -14,19 +13,28 @@ def get_response_from_ai_agents(llm_id, query, allow_search, system_prompt):
 
     agent = create_react_agent(
         model=llm,
-        tools=tools,
-        state_modifier=system_prompt if system_prompt else None
+        tools=tools
     )
 
+    # Build message list with system prompt if provided
+    messages = []
+    if system_prompt:
+        messages.append(SystemMessage(content=system_prompt))
+    
     # Convert query list to HumanMessage objects
-    messages = [HumanMessage(content=q) for q in query] if isinstance(query, list) else [HumanMessage(content=query)]
+    if isinstance(query, list):
+        for q in query:
+            messages.append(HumanMessage(content=q))
+    else:
+        messages.append(HumanMessage(content=query))
+    
     state = {"messages": messages}
 
     response = agent.invoke(state)
 
-    messages = response.get("messages", [])
+    messages_response = response.get("messages", [])
 
-    ai_messages = [message.content for message in messages if isinstance(message, AIMessage)]
+    ai_messages = [message.content for message in messages_response if isinstance(message, AIMessage)]
 
     return ai_messages[-1] if ai_messages else "No response generated"
 
