@@ -17,32 +17,51 @@ A production-ready multi-AI agent application that combines **Groq LLM**, **Tavi
 
 ---
 
-## 📋 Architecture
+## 🔄 Workflow
 
+### Application Flow
+
+```mermaid
+flowchart TD
+    A[👤 User] -->|Enter query + select model| B[🎨 Streamlit Frontend\nPort 8501]
+    B -->|POST /chat| C[⚡ FastAPI Backend\nPort 9999]
+    C -->|Initialize| D{🏗️ LangGraph\nReact Agent}
+    D -->|Create| E[🤖 Groq LLM]
+    D -->|Search enabled?| F{Web Search?}
+    F -->|Yes| G[🔍 Tavily Search\nReal-time results]
+    F -->|No| E
+    G -->|Search context| E
+    E -->|AI Response| H[📨 Return Response]
+    H -->|JSON| B
+    B -->|Display| A
+
+    style A fill:#4CAF50,color:#fff
+    style B fill:#FF9800,color:#fff
+    style C fill:#2196F3,color:#fff
+    style D fill:#9C27B0,color:#fff
+    style E fill:#F44336,color:#fff
+    style G fill:#00BCD4,color:#fff
+    style H fill:#607D8B,color:#fff
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     User Interface                          │
-│              (Streamlit Frontend — Port 8501)               │
-└────────────────────┬────────────────────────────────────────┘
-                     │ HTTP Requests
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   FastAPI Backend                            │
-│         (REST API — Port 9999 /chat endpoint)               │
-└────────────┬──────────────────────────┬─────────────────────┘
-             │                          │
-             ▼                          ▼
-      ┌─────────────┐          ┌──────────────┐
-      │  Groq LLM   │          │ Tavily Search│
-      │  Models     │          │  Integration │
-      └─────────────┘          └──────────────┘
-             ▲                          ▲
-             └──────────┬───────────────┘
-                        │
-                ┌───────▼────────┐
-                │  LangGraph     │
-                │  React Agent   │
-                └────────────────┘
+
+### CI/CD Pipeline
+
+```mermaid
+flowchart LR
+    A[📝 Git Push] -->|Webhook| B[🔧 Jenkins]
+    B --> C[📊 SonarQube\nCode Analysis]
+    C --> D[🐳 Docker Build\nMulti-stage]
+    D --> E[📦 GCP Artifact\nRegistry]
+    E --> F[☁️ Cloud Run\nDeploy]
+    F --> G[🌐 Live App]
+
+    style A fill:#333,color:#fff
+    style B fill:#D24939,color:#fff
+    style C fill:#4E9BCD,color:#fff
+    style D fill:#2496ED,color:#fff
+    style E fill:#4285F4,color:#fff
+    style F fill:#34A853,color:#fff
+    style G fill:#4CAF50,color:#fff
 ```
 
 ---
@@ -262,8 +281,6 @@ multi-ai-agent-gcp/
 │   │   ├── ai_agent.py       # LangGraph react agent
 │   │   └── __init__.py
 │   └── __init__.py
-├── assets/                   # Project images & diagrams
-│   └── workflow-diagram.png
 ├── custom_jenkins/           # Jenkins Docker image
 │   └── Dockerfile
 ├── Dockerfile                # Multi-stage production build
