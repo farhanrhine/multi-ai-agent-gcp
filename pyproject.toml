@@ -1,7 +1,7 @@
 [project]
 name = "multi-ai-agent-gcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "Multi-AI Agent using Groq LLM and Tavily Search with FastAPI backend and Streamlit frontend - Deployable on AWS or GCP"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

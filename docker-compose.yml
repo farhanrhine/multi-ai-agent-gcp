@@ -21,9 +21,6 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    # Uncomment below if you want to run only after dependencies
-    depends_on:
-      - sonarqube
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8501"]
       interval: 30s

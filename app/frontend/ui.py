@@ -16,7 +16,14 @@ from app.common.custom_exception import CustomException
 logger = get_logger(__name__)
 
 st.set_page_config(page_title="Multi AI Agent" , layout="centered")
-st.title("Multi AI Agent using Groq and Tavily New")
+st.title("Multi AI Agent using Groq and Tavily")
+
+# Get backend URL from environment variable with fallback to localhost
+BACKEND_HOST = os.getenv("BACKEND_HOST", "localhost")
+BACKEND_PORT = os.getenv("BACKEND_PORT", "9999")
+API_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}/chat"
+
+logger.info(f"Connecting to backend at: {API_URL}")
 
 system_prompt = st.text_area("Define your AI Agent: " , height=70)
 selected_model = st.selectbox("Select your AI model: ", settings.ALLOWED_MODEL_NAMES)
@@ -24,8 +31,6 @@ selected_model = st.selectbox("Select your AI model: ", settings.ALLOWED_MODEL_N
 allow_web_search = st.checkbox("Allow web search")
 
 user_query = st.text_area("Enter your query : " , height=150)
-
-API_URL = "http://127.0.0.1:9999/chat"
 
 if st.button("Ask Agent") and user_query.strip():
 

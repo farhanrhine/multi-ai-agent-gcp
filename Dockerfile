@@ -57,6 +57,10 @@ COPY . .
 ## Add virtual environment to PATH
 ENV PATH="/app/.venv/bin:$PATH"
 
+## Backend Configuration
+ENV BACKEND_HOST="0.0.0.0" \
+    BACKEND_PORT="9999"
+
 ## Exposed Ports
 ## 8501 - Streamlit Frontend
 ## 9999 - FastAPI Backend
