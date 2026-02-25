@@ -1,28 +1,33 @@
 ## Parent image
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 ## Essential environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    UV_PROJECT_ENVIRONMENT=/app/.venv
 
 ## Work directory inside the docker container
 WORKDIR /app
 
-## Installing system dependancies
+## Installing system dependencies and uv
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && rm -rf /var/lib/apt/lists/*
 
-## Copying ur all contents from local to app
+## Add uv to PATH
+ENV PATH="/root/.cargo/bin:$PATH"
+
+## Copy project files
 COPY . .
 
-## Run setup.py
-RUN pip install --no-cache-dir -e .
+## Install dependencies using uv
+RUN uv sync --frozen
 
-# Used PORTS
+## Used PORTS
 EXPOSE 8501
 EXPOSE 9999
 
-# Run the app 
-CMD ["python", "app/main.py"]
+## Run the app
+CMD ["uv", "run", "main.py"]
