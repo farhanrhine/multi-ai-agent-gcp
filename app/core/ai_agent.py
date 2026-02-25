@@ -1,69 +1,118 @@
-from langchain_groq import ChatGroq
-from langchain_tavily import TavilySearch
+from langchain.chat_models import init_chat_model
 from langchain.tools import tool
-from langgraph.prebuilt import create_react_agent
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_tavily import TavilySearch
+from langchain_core.messages import AIMessage, SystemMessage, HumanMessage, ToolMessage
+
+from langgraph.graph import StateGraph, START, END
+from typing_extensions import TypedDict, Annotated
+from typing import Literal
+import operator
 
 from app.config.settings import settings
 
 
-# Define Tavily search tool
+# ──────────────────────────────────────────────
+# Tools
+# ──────────────────────────────────────────────
+
 @tool
 def tavily_search(query: str) -> str:
-    """Search the web using Tavily for current information."""
+    """Search the web using Tavily for current, real-time information.
+
+    Args:
+        query: The search query to look up on the web.
+    """
     search = TavilySearch(max_results=2)
     results = search.invoke({"query": query})
     return str(results)
 
 
+# ──────────────────────────────────────────────
+# State
+# ──────────────────────────────────────────────
+
+class AgentState(TypedDict):
+    messages: Annotated[list, operator.add]
+    system_prompt: str
+
+
+# ──────────────────────────────────────────────
+# Custom LangGraph Agent (StateGraph)
+# ──────────────────────────────────────────────
+
 def get_response_from_ai_agents(llm_id: str, query: list, allow_search: bool, system_prompt: str) -> str:
-    """Get response from AI agent using latest LangGraph/LangChain API."""
-    
-    # Initialize LLM
-    llm = ChatGroq(model=llm_id, temperature=0.7)
-    
-    # Define tools list
+    """Custom agent built with LangGraph StateGraph — nodes, edges, and conditional routing."""
+
+    # Initialize model
+    model = init_chat_model(llm_id, model_provider="groq", temperature=0.7)
+
+    # Setup tools
     tools = [tavily_search] if allow_search else []
-    
-    # Create react agent
-    agent = create_react_agent(
-        model=llm,
-        tools=tools
-    )
-    
-    # Build messages
+    tools_by_name = {t.name: t for t in tools}
+
+    # Bind tools to the model
+    model_with_tools = model.bind_tools(tools) if tools else model
+
+    # ── Node: LLM call ──
+    def llm_node(state: AgentState):
+        """LLM decides whether to call a tool or respond directly."""
+        prompt = state.get("system_prompt", "You are a helpful assistant.")
+        msgs = [SystemMessage(content=prompt)] + state["messages"]
+        response = model_with_tools.invoke(msgs)
+        return {"messages": [response]}
+
+    # ── Node: Tool execution ──
+    def tool_node(state: AgentState):
+        """Execute tool calls from the LLM response."""
+        results = []
+        last_message = state["messages"][-1]
+        for tool_call in last_message.tool_calls:
+            tool_fn = tools_by_name[tool_call["name"]]
+            result = tool_fn.invoke(tool_call["args"])
+            results.append(
+                ToolMessage(content=str(result), tool_call_id=tool_call["id"])
+            )
+        return {"messages": results}
+
+    # ── Conditional edge: continue or stop ──
+    def should_continue(state: AgentState) -> Literal["tool_node", "__end__"]:
+        """Route to tool_node if LLM made tool calls, otherwise end."""
+        last_message = state["messages"][-1]
+        if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+            return "tool_node"
+        return END
+
+    # ── Build the graph ──
+    graph = StateGraph(AgentState)
+
+    graph.add_node("llm_node", llm_node)
+    graph.add_node("tool_node", tool_node)
+
+    graph.add_edge(START, "llm_node")
+    graph.add_conditional_edges("llm_node", should_continue, ["tool_node", END])
+    graph.add_edge("tool_node", "llm_node")
+
+    agent = graph.compile()
+
+    # Build input messages
     messages = []
-    
-    # Add system prompt if provided
-    if system_prompt:
-        messages.append(SystemMessage(content=system_prompt))
-    
-    # Add user queries
     if isinstance(query, list):
         for q in query:
             messages.append(HumanMessage(content=q))
     else:
         messages.append(HumanMessage(content=query))
-    
-    # Invoke agent
+
+    # Invoke
     try:
-        response = agent.invoke({"messages": messages})
-        
-        # Extract AI message from response
+        response = agent.invoke({
+            "messages": messages,
+            "system_prompt": system_prompt if system_prompt else "You are a helpful assistant."
+        })
+
         messages_list = response.get("messages", [])
-        
-        # Get the last AI message
         ai_messages = [msg.content for msg in messages_list if isinstance(msg, AIMessage)]
-        
-        if ai_messages:
-            return ai_messages[-1]
-        else:
-            return "No response generated from the agent."
-    
+
+        return ai_messages[-1] if ai_messages else "No response generated."
+
     except Exception as e:
         raise Exception(f"Error invoking agent: {str(e)}")
-
-
-
-
-

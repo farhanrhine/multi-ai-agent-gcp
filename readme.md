@@ -1,14 +1,14 @@
 # 🤖 Multi-AI Agent using Groq & Tavily
 
-A multi-AI agent application that combines **Groq LLM**, **Tavily Search**, and **LangGraph** for intelligent task execution. Built with **FastAPI** backend and **Streamlit** frontend, deployable on **GCP Cloud Run** via **Jenkins CI/CD**.
+A multi-AI agent application powered by a **custom LangGraph StateGraph** agent with **Groq LLM** and **Tavily Search**. Built with **FastAPI** backend and **Streamlit** frontend, deployable on **GCP Cloud Run** via **Jenkins CI/CD**.
 
 ---
 
 ## 🌟 Features
 
-- ✨ **Multi-Model Support** — Switch between Groq models (Qwen, Llama, Mixtral, Gemma)
+- ✨ **Multi-Model Support** — Switch between Groq models (Qwen, Llama)
 - 🔍 **Web Search Integration** — Tavily Search for real-time information retrieval
-- 🏗️ **Agent Architecture** — LangGraph-based system with `create_react_agent`
+- 🏗️ **Agent Architecture** — Custom LangGraph `StateGraph` with nodes, edges & conditional routing
 - ⚡ **FastAPI Backend** — REST API on port 9999
 - 🎨 **Streamlit Frontend** — Interactive UI on port 8501
 - 🐳 **Docker Ready** — Multi-stage optimized builds
@@ -23,16 +23,20 @@ A multi-AI agent application that combines **Groq LLM**, **Tavily Search**, and 
 
 ```mermaid
 flowchart TD
-    A[👤 User] -->|Enter query + select model| B[🎨 Streamlit Frontend\nPort 8501]
-    B -->|POST /chat| C[⚡ FastAPI Backend\nPort 9999]
-    C -->|Initialize| D{🏗️ LangGraph\nReact Agent}
-    D -->|Create| E[🤖 Groq LLM]
-    D -->|Search enabled?| F{Web Search?}
-    F -->|Yes| G[🔍 Tavily Search\nReal-time results]
-    F -->|No| E
-    G -->|Search context| E
-    E -->|AI Response| H[📨 Return Response]
-    H -->|JSON| B
+    A[👤 User] -->|Query + Model| B[🎨 Streamlit UI\nPort 8501]
+    B -->|POST /chat| C[⚡ FastAPI\nPort 9999]
+    C -->|Build & Compile| D[🔧 StateGraph]
+
+    subgraph LangGraph Agent
+        D --> E["🧠 llm_node\ninit_chat_model + bind_tools"]
+        E --> F{should_continue?}
+        F -->|tool_calls exist| G["🔍 tool_node\nTavily Search"]
+        G -->|results| E
+        F -->|no tool_calls| H[END]
+    end
+
+    H -->|AI Response| C
+    C -->|JSON| B
     B -->|Display| A
 
     style A fill:#4CAF50,color:#fff
@@ -40,6 +44,7 @@ flowchart TD
     style C fill:#2196F3,color:#fff
     style D fill:#9C27B0,color:#fff
     style E fill:#F44336,color:#fff
+    style F fill:#FF5722,color:#fff
     style G fill:#00BCD4,color:#fff
     style H fill:#607D8B,color:#fff
 ```
@@ -82,7 +87,7 @@ cd multi-ai-agent-gcp
 cp .env.example .env   # Add your API keys
 
 uv sync                # Install dependencies
-python main.py         # Start app
+uv run main.py         # Start app
 ```
 
 - 🎨 **UI**: <http://localhost:8501>
@@ -90,7 +95,51 @@ python main.py         # Start app
 
 ---
 
-## 🐳 Docker
+## � Example Prompts
+
+Here are some examples to get started. Set the **System Prompt** to define the agent's role, then ask your **Query**.
+
+### 🔬 Research Assistant (with Web Search ✅)
+
+> **System Prompt:** `You are a research assistant who provides well-sourced, factual answers.`
+>
+> **Query:** `What are the latest breakthroughs in quantum computing in 2025?`
+
+### 💻 Code Helper
+
+> **System Prompt:** `You are a senior Python developer. Explain concepts clearly with code examples.`
+>
+> **Query:** `How do I implement a retry mechanism with exponential backoff in Python?`
+
+### 🩺 Medical Info (with Web Search ✅)
+
+> **System Prompt:** `You are a medical information assistant. Always recommend consulting a doctor.`
+>
+> **Query:** `What are the early symptoms of Type 2 diabetes and how is it diagnosed?`
+
+### 📊 Data Analyst
+
+> **System Prompt:** `You are a data analyst. Explain things with examples and suggest tools.`
+>
+> **Query:** `How should I clean and preprocess a dataset with missing values and outliers?`
+
+### ✍️ Content Writer
+
+> **System Prompt:** `You are a professional content writer. Write in a clear, engaging tone.`
+>
+> **Query:** `Write a LinkedIn post about how AI agents are changing software development.`
+
+### 🌍 Travel Planner (with Web Search ✅)
+
+> **System Prompt:** `You are a travel planning expert. Give detailed itineraries with costs.`
+>
+> **Query:** `Plan a 5-day budget trip to Tokyo, Japan for a solo traveler.`
+
+> **💡 Tip:** Enable **Web Search** when you need real-time or up-to-date information. Disable it for general knowledge questions to get faster responses.
+
+---
+
+## �🐳 Docker
 
 ```bash
 # Build & run
@@ -107,7 +156,16 @@ docker-compose up -d
 
 ## 📚 API
 
-**POST** `/chat`
+### `GET /` — Health Check
+
+```json
+// Response
+{ "status": "running", "service": "Multi AI Agent API" }
+```
+
+### `POST /chat` — Chat with Agent
+
+Request:
 
 ```json
 {
@@ -118,7 +176,15 @@ docker-compose up -d
 }
 ```
 
-**Supported Models:** `qwen/qwen3-32b` · `qwen/qwen3-72b` · `llama-3.3-70b-versatile` · `mixtral-8x7b-32768` · `gemma2-9b-it`
+Response:
+
+```json
+{
+  "response": "The weather today in..."
+}
+```
+
+**Supported Models:** `qwen/qwen3-32b` · `llama-3.3-70b-versatile`
 
 ---
 
@@ -155,7 +221,7 @@ multi-ai-agent-gcp/
 ├── app/
 │   ├── backend/api.py          # FastAPI REST API
 │   ├── frontend/ui.py          # Streamlit UI
-│   ├── core/ai_agent.py        # LangGraph react agent
+│   ├── core/ai_agent.py        # Custom LangGraph StateGraph agent
 │   ├── config/settings.py      # Environment & model config
 │   └── common/                 # Logger & custom exceptions
 ├── custom_jenkins/Dockerfile   # Jenkins image with GCP SDK
@@ -169,4 +235,4 @@ multi-ai-agent-gcp/
 
 ---
 
-**Built with ❤️ using Groq, Tavily, LangGraph, FastAPI, and Streamlit**
+**Built with ❤️ using Groq, Tavily, LangChain, LangGraph, FastAPI, and Streamlit**

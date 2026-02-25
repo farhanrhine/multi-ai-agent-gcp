@@ -30,11 +30,11 @@ def chat_endpoint(request: RequestState):
     if request.model_name not in settings.ALLOWED_MODEL_NAMES:
         logger.warning(f"Invalid model name: {request.model_name}")
         raise HTTPException(status_code=400, detail="Invalid model name")
-    
+
     try:
         logger.info(f"System prompt: {request.system_prompt}")
         logger.info(f"Allow search: {request.allow_search}")
-        
+
         response = get_response_from_ai_agents(
             request.model_name,
             request.messages,
@@ -44,11 +44,10 @@ def chat_endpoint(request: RequestState):
 
         logger.info(f"Successfully got response from AI Agent {request.model_name}")
         return {"response": response}
-    
+
     except Exception as e:
         logger.error(f"Error during response generation: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate response: {str(e)}"
         )
-

@@ -11,10 +11,7 @@ class Settings:
 
     ALLOWED_MODEL_NAMES = [
         "qwen/qwen3-32b",
-        "qwen/qwen3-72b",
         "llama-3.3-70b-versatile",
-        "mixtral-8x7b-32768",
-        "gemma2-9b-it",
     ]
 
     def __init__(self):
