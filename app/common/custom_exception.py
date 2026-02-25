@@ -10,7 +10,13 @@ class CustomException(Exception):
         _, _, exc_tb = sys.exc_info()
         file_name = exc_tb.tb_frame.f_code.co_filename if exc_tb else "Unknown File"
         line_number = exc_tb.tb_lineno if exc_tb else "Unknown Line"
-        return f"{message} | Error: {error_detail} | File: {file_name} | Line: {line_number}"
+        
+        error_str = f"{message}"
+        if error_detail:
+            error_str += f" | Error: {str(error_detail)}"
+        error_str += f" | File: {file_name} | Line: {line_number}"
+        
+        return error_str
 
     def __str__(self):
         return self.error_message
