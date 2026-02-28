@@ -75,7 +75,7 @@ pipeline {
                         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                         docker push ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
 
-                        echo "✅ Successfully pushed to GCP Artifact Registry: ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                        echo "Successfully pushed to GCP Artifact Registry: ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
                         '''
                     }
                 }

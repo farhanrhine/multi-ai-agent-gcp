@@ -1,7 +1,7 @@
 # ============================================================================
 # Stage 1: Builder - Install dependencies
 # ============================================================================
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 ## Essential environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
