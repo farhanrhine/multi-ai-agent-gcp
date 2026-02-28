@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_PROJECT_KEY = 'LLMOPS'
+        SONAR_PROJECT_KEY = 'multi-ai-agent-gcp'
         SONAR_SCANNER_HOME = tool 'Sonarqube'
 
         // GCP Configuration

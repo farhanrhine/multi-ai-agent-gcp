@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: multi-ai-app
+    container_name: multi-ai-agent-app
     ports:
       - "8501:8501"    # Streamlit Frontend
       - "9999:9999"    # FastAPI Backend
