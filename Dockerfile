@@ -8,10 +8,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_PROJECT_ENVIRONMENT=/app/.venv
 
-WORKDIR /tmp
+WORKDIR /app
 
 ## Installing system dependencies and uv
-RUN apt-get update && apt-get install -y \
+RUN apt-get -o Acquire::ForceIPv4=true update && apt-get -o Acquire::ForceIPv4=true install -y \
     build-essential \
     curl \
     git \
@@ -39,7 +39,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME=/app
 
 ## Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
+RUN apt-get -o Acquire::ForceIPv4=true update && apt-get -o Acquire::ForceIPv4=true install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
