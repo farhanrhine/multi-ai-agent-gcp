@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SONAR_PROJECT_KEY = 'multi-ai-agent-gcp'
-        SONAR_SCANNER_HOME = tool 'Sonarqube'
+        SONAR_PROJECT_KEY = 'multi-ai-agent-gcp' // change this according to your sonarqube project name (stage 2)
+        SONAR_SCANNER_HOME = tool 'Sonarqube' // change this according to your sonarqube tool name in jenkins (stage 2)
 
         // GCP Configuration
         GCP_PROJECT_ID = credentials('gcp-project-id')
@@ -24,27 +24,27 @@ pipeline {
                     checkout scmGit(
                         branches: [[name: '*/main']],
                         extensions: [],
-                        userRemoteConfigs: [[credentialsId: 'github-token', url: env.GITHUB_REPO]] // replace with with **Generate Pipeline Script you just generated from jenkins**
+                        userRemoteConfigs: [[credentialsId: 'github-token', url: env.GITHUB_REPO]] // replace with with **Generate Pipeline Script you just generated from jenkins** ( stage 1)
                     )
                 }
             }
         }
 
-        // stage('SonarQube Analysis') {
-        //     steps {
-        //         withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-        //             withSonarQubeEnv('Sonarqube') {
-        //                 sh """
-        //                 ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-        //                 -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-        //                 -Dsonar.sources=. \
-        //                 -Dsonar.host.url=http://sonarqube-dind:9000 \
-        //                 -Dsonar.login=${SONAR_TOKEN}
-        //                 """
-        //             }
-        //         }
-        //     }
-        // }
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    withSonarQubeEnv('Sonarqube') {
+                        sh """
+                        ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://sonarqube-dind:9000 \
+                        -Dsonar.login=${SONAR_TOKEN}
+                        """
+                    } // change `credentialsId`  and `withSonarQubeEnv` will change check on jenkins ui (stage 2)
+                }
+            }
+        }
 
         // stage('Build & Push to GCP Artifact Registry') {
         //     when {
@@ -117,7 +117,7 @@ pipeline {
         //                   --set-env-vars GROQ_API_KEY=${GROQ_API_KEY},TAVILY_API_KEY=${TAVILY_API_KEY}
 
         //                 SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} --region ${GCP_REGION} --format='value(status.url)')
-        //                 echo "✅ Cloud Run deployment complete"
+        //                 echo "Cloud Run deployment complete"
         //                 echo "Service URL: ${SERVICE_URL}"
         //                 '''
         //             }
