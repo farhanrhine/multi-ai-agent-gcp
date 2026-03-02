@@ -25,23 +25,23 @@ A multi-AI agent application powered by a **custom LangGraph StateGraph** agent 
 
 ```mermaid
 flowchart TD
-    A[👤 User] -->|Query + Model| B[🎨 Single-File UI\nFastAPI Serving]
+    A[👤 User] -->|Query + Model| B[🎨 Single-File UI<br/>FastAPI Serving]
     B -->|POST /chat/stream| C[⚡ FastAPI Backend]
     
     subgraph Stream Environment [Real-time Token Stream]
     C -->|Build & Compile| D[🔧 StateGraph]
 
     subgraph LangGraph Agent [Unified Reasoning Engine]
-        D --> E["🧠 llm_node\nReasoning + Content"]
+        D --> E["🧠 llm_node<br/>Reasoning + Content"]
         E --> F{should_continue?}
-        F -->|tool_calls exist| G["🔍 tool_node\nTavily Search"]
+        F -->|tool_calls exist| G["🔍 tool_node<br/>Tavily Search"]
         G -->|results| E
         F -->|no tool_calls| H[END]
     end
     
-    E -.->|Thinking Tokens| I["📜 Unified Thought Box\n&lt;thought&gt; markers"]
+    E -.->|Thinking Tokens| I["📜 Unified Thought Box<br/>&lt;thought&gt; markers"]
     G -.->|Search Findings| I
-    E -.->|Answer Tokens| J["💬 Final Response\nMarkdown Render"]
+    E -.->|Answer Tokens| J["💬 Final Response<br/>Markdown Render"]
     end
 
     I --> B
@@ -65,10 +65,10 @@ flowchart TD
 ```mermaid
 flowchart LR
     A[📝 Git Push] -->|Webhook| B[🔧 Jenkins]
-    B --> C[📊 SonarQube\nCode Analysis]
-    C --> D[🐳 Docker Build\nMulti-stage]
-    D --> E[📦 GCP Artifact\nRegistry]
-    E --> F[☁️ Cloud Run\nDeploy]
+    B --> C[📊 SonarQube<br/>Code Analysis]
+    C --> D[🐳 Docker Build<br/>Multi-stage]
+    D --> E[📦 GCP Artifact<br/>Registry]
+    E --> F[☁️ Cloud Run<br/>Deploy]
     F --> G[🌐 Live App]
 
     style A fill:#333,color:#fff
