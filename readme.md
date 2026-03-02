@@ -225,6 +225,7 @@ Or use the included `Jenkinsfile` for automated CI/CD deployment.
 
 ## 📂 Project Structure
 
+```text
 multi-ai-agent-gcp/
 ├── app/
 │   ├── backend/api.py          # FastAPI REST API & Static Serving
