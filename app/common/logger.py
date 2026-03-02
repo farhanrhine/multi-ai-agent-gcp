@@ -16,7 +16,8 @@ file_handler = logging.FileHandler(LOG_FILE)
 file_handler.setLevel(logging.INFO)
 
 # Console handler
-console_handler = logging.StreamHandler()
+import sys, io
+console_handler = logging.StreamHandler(io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace'))
 console_handler.setLevel(logging.INFO)
 
 # Formatter

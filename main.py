@@ -35,7 +35,7 @@ def run_backend():
 
 def main():
     logger.info("Starting Multi AI Agent application...")
-    logger.info(f"✨ Single-File App (SFA) is running at: http://{BACKEND_HOST}:{BACKEND_PORT}/")
+    logger.info(f"Single-File App (SFA) is running at: http://{BACKEND_HOST}:{BACKEND_PORT}/")
 
     # Run backend in the main thread
     try:
