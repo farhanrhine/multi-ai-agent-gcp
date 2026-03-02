@@ -150,12 +150,14 @@ def stream_response_from_ai_agents(llm_id: str, query: list, allow_search: bool,
     # Accumulate tool-call argument chunks so we can read the full query
     pending_tool_calls: dict = {}   # index -> {"name": str, "args": str}
     has_started_reasoning = False
+    in_tool_loop = False          # True once the first tool call is made
+    llm_text_buffer = ""          # Buffer intermediate LLM text between tool calls
 
     try:
         for chunk, metadata in agent.stream(input_data, stream_mode="messages"):
 
             if isinstance(chunk, AIMessageChunk):
-                # ── Stream reasoning content if available ──
+                # ── Stream reasoning content (model's native chain-of-thought) ──
                 reasoning = chunk.additional_kwargs.get("reasoning_content")
                 if reasoning:
                     if not has_started_reasoning:
@@ -165,8 +167,6 @@ def stream_response_from_ai_agents(llm_id: str, query: list, allow_search: bool,
 
                 # ── Collect streaming tool-call argument chunks ──
                 tool_call_chunks = getattr(chunk, "tool_call_chunks", [])
-                
-                # If we have a tool call, we should ensure the thought block is open if it isn't already
                 if tool_call_chunks and not has_started_reasoning:
                     yield REASONING_START
                     has_started_reasoning = True
@@ -178,20 +178,32 @@ def stream_response_from_ai_agents(llm_id: str, query: list, allow_search: bool,
                     pending_tool_calls[idx]["name"] += tc_chunk.get("name") or ""
                     pending_tool_calls[idx]["args"] += tc_chunk.get("args") or ""
 
-                # ── Yield normal content tokens ──
+                # ── Buffer content tokens; decide where they go after seeing what follows ──
                 if chunk.content:
-                    if has_started_reasoning:
-                        yield REASONING_END
-                        has_started_reasoning = False
-                    yield chunk.content
+                    if in_tool_loop:
+                        # We are between tool calls — buffer; will flush into thought block
+                        llm_text_buffer += chunk.content
+                    else:
+                        # No tool calls yet — stream directly as final content
+                        if has_started_reasoning:
+                            yield REASONING_END
+                            has_started_reasoning = False
+                        yield chunk.content
 
             elif isinstance(chunk, ToolMessage):
-                # Ensure the thought block is open if it isn't (though usually it is from the previous AIMessageChunk)
+                # A tool result arrived → everything buffered so far is intermediate thinking
+                in_tool_loop = True
+
                 if not has_started_reasoning:
                     yield REASONING_START
                     has_started_reasoning = True
 
-                # ── Build a reasoning block to send to the frontend ──
+                # Flush any intermediate LLM text into the thought block
+                if llm_text_buffer.strip():
+                    yield f"\n\n_{llm_text_buffer.strip()}_\n"
+                    llm_text_buffer = ""
+
+                # ── Format and emit search results inside the thought block ──
                 queries_md = ""
                 for tc in pending_tool_calls.values():
                     try:
@@ -204,47 +216,43 @@ def stream_response_from_ai_agents(llm_id: str, query: list, allow_search: bool,
 
                 raw_results = chunk.content
                 formatted_results = ""
-                
+
                 try:
-                    # Tavily usually returns a JSON string containing {'results': [...]}
                     if isinstance(raw_results, str):
                         parsed_results = json.loads(raw_results)
-                        # Extract the 'results' list from the dict if it's there
                         if isinstance(parsed_results, dict) and "results" in parsed_results:
                             parsed_results = parsed_results["results"]
                     else:
                         parsed_results = raw_results
-                        
+
                     if isinstance(parsed_results, list):
-                        for item in parsed_results[:3]:  # Top 3 results
+                        for item in parsed_results[:3]:
                             url = item.get("url", "#")
                             title = item.get("title", "No Title")
                             snippet = item.get("content", "No content available")
-                            # Truncate snippet to keep UI clean
                             snippet = snippet[:150] + "..." if len(snippet) > 150 else snippet
                             formatted_results += f"- **[{title}]({url})**\n  {snippet}\n\n"
                     else:
-                        raise ValueError() # Fallback to string processing
+                        raise ValueError()
                 except Exception:
-                    # Fallback if it's not the expected list of dicts format
                     raw_str = str(raw_results)
-                    # Simple regex-like replacement string cleaning without completely eating the syntax
                     raw_str = raw_str.replace("[{'url': ", "URL: ").replace(", 'title': ", "\nTitle: ").replace(", 'content': ", "\nSummary: ")
-                    # Format as markdown quote to look nice
                     formatted_results = "> " + raw_str[:600] + ("…" if len(raw_str) > 600 else "")
 
-                reasoning_update = (
+                yield (
                     f"\n\n#### 🔍 Web Search Results\n"
                     f"{queries_md}"
                     f"{formatted_results}\n"
                 )
-                yield reasoning_update
 
-                # Reset for the next potential tool call
+                # Reset for next potential tool call
                 pending_tool_calls = {}
 
+        # ── End of stream: close thought block then emit buffered final answer ──
         if has_started_reasoning:
             yield REASONING_END
+        if llm_text_buffer:
+            yield llm_text_buffer
 
     except Exception as e:
         yield f"\n\nError: {str(e)}"

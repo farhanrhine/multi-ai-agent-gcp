@@ -11,7 +11,7 @@ class Settings:
 
     ALLOWED_MODEL_NAMES = [
         "qwen/qwen3-32b",
-        "llama-3.3-70b-versatile",
+        "moonshotai/kimi-k2-instruct-0905",
     ]
 
     def __init__(self):
