@@ -1,5 +1,7 @@
+import os
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List
 from app.core.ai_agent import get_response_from_ai_agents, stream_response_from_ai_agents
@@ -11,6 +13,12 @@ logger = get_logger(__name__)
 
 app = FastAPI(title="MULTI AI AGENT")
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+FRONTEND_DIR = os.path.join(PROJECT_ROOT, "app", "frontend")
+
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
 
 class RequestState(BaseModel):
     model_name: str
@@ -20,8 +28,21 @@ class RequestState(BaseModel):
 
 
 @app.get("/")
+def serve_frontend():
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"status": "Frontend not found"}
+
+@app.get("/health")
 def health_check():
     return {"status": "running", "service": "Multi AI Agent API"}
+
+@app.get("/config")
+def get_config():
+    return {
+        "allowed_models": settings.ALLOWED_MODEL_NAMES
+    }
 
 
 @app.post("/chat")

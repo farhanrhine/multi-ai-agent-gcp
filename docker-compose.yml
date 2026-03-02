@@ -1,15 +1,14 @@
 version: '3.8'
 
 services:
-  # Main application service (FastAPI + Streamlit)
+  # Main application service (FastAPI SFA)
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: multi-ai-agent-app
     ports:
-      - "8501:8501"    # Streamlit Frontend
-      - "9999:9999"    # FastAPI Backend
+      - "9999:9999"    # FastAPI Backend & SFA Frontend
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
@@ -22,7 +21,7 @@ services:
       - app-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501"]
+      test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
       interval: 30s
       timeout: 10s
       retries: 3

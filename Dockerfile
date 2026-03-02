@@ -62,13 +62,12 @@ ENV BACKEND_HOST="0.0.0.0" \
     BACKEND_PORT="9999"
 
 ## Exposed Ports
-## 8501 - Streamlit Frontend
 ## 9999 - FastAPI Backend
-EXPOSE 8501 9999
+EXPOSE 9999
 
 ## Health check (optional - checks if services are responding)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:9999/health')" || exit 1
 
 ## Run the application
 CMD ["python", "main.py"]

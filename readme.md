@@ -1,6 +1,6 @@
 # 🤖 Multi-AI Agent using Groq & Tavily
 
-A multi-AI agent application powered by a **custom LangGraph StateGraph** agent with **Groq LLM** and **Tavily Search**. Built with **FastAPI** backend and **Streamlit** frontend, deployable on **GCP Cloud Run** via **Jenkins CI/CD**.
+A multi-AI agent application powered by a **custom LangGraph StateGraph** agent with **Groq LLM** and **Tavily Search**. Built with **FastAPI** serving a **Single-File HTML frontend**, deployable on **GCP Cloud Run** via **Jenkins CI/CD**.
 
 ---
 
@@ -11,8 +11,7 @@ A multi-AI agent application powered by a **custom LangGraph StateGraph** agent 
 - 🏗️ **Agent Architecture** — Custom LangGraph `StateGraph` with nodes, edges & conditional routing
 - 🌊 **Real-time Streaming** — Token-by-token response display
 - 📜 **Auto-scroll** — Smooth auto-scrolling during response generation
-- ⚡ **FastAPI Backend** — REST API on port 9999
-- 🎨 **Streamlit Frontend** — Interactive UI on port 8501
+- ⚡ **FastAPI Backend & SFA** — REST API and Single-File HTML App on port 9999
 - 🐳 **Docker Ready** — Multi-stage optimized builds
 - ☁️ **GCP Cloud Run** — Cloud deployment
 - 🔌 **CI/CD** — Jenkins + SonarQube
@@ -25,8 +24,8 @@ A multi-AI agent application powered by a **custom LangGraph StateGraph** agent 
 
 ```mermaid
 flowchart TD
-    A[👤 User] -->|Query + Model| B[🎨 Streamlit UI\nPort 8501]
-    B -->|POST /chat| C[⚡ FastAPI\nPort 9999]
+    A[👤 User] -->|Query + Model| B[🎨 Single-File HTML UI\nPort 9999]
+    B -->|POST /chat/stream| C[⚡ FastAPI Backend]
     C -->|Build & Compile| D[🔧 StateGraph]
 
     subgraph LangGraph Agent
@@ -38,7 +37,7 @@ flowchart TD
     end
 
     H -->|AI Response| C
-    C -->|JSON| B
+    C -->|Stream| B
     B -->|Display| A
 
     style A fill:#4CAF50,color:#fff
@@ -89,10 +88,10 @@ cd multi-ai-agent-gcp
 cp .env.example .env   # Add your API keys
 
 uv sync                # Install dependencies
-uv run main.py         # Start app
+uv run python main.py  # Start app
 ```
 
-- 🎨 **UI**: <http://localhost:8501>
+- 🎨 **UI**: <http://localhost:9999>
 - ⚙️ **API Docs**: <http://localhost:9999/docs>
 
 ---
@@ -146,7 +145,7 @@ Here are some examples to get started. Set the **System Prompt** to define the a
 ```bash
 # Build & run
 docker build -t multi-ai-agent:latest .
-docker run -it -p 8501:8501 -p 9999:9999 \
+docker run -it -p 9999:9999 \
   -e GROQ_API_KEY=your_key -e TAVILY_API_KEY=your_key \
   multi-ai-agent:latest
 
@@ -158,7 +157,11 @@ docker-compose up -d
 
 ## 📚 API
 
-### `GET /` — Health Check
+### `GET /` — Frontend UI
+
+Serves the `index.html` file hosting the application.
+
+### `GET /health` — Health Check
 
 ```json
 // Response
@@ -211,7 +214,7 @@ docker push us-central1-docker.pkg.dev/YOUR_PROJECT_ID/multi-ai-agent/multi-ai-a
 
 gcloud run deploy multi-ai-agent-service \
   --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/multi-ai-agent/multi-ai-agent:latest \
-  --region us-central1 --allow-unauthenticated --port 8501 \
+  --region us-central1 --allow-unauthenticated --port 9999 \
   --memory 2Gi --cpu 2 \
   --set-env-vars GROQ_API_KEY=xxx,TAVILY_API_KEY=xxx
 ```
@@ -222,11 +225,10 @@ Or use the included `Jenkinsfile` for automated CI/CD deployment.
 
 ## 📂 Project Structure
 
-```
 multi-ai-agent-gcp/
 ├── app/
-│   ├── backend/api.py          # FastAPI REST API
-│   ├── frontend/ui.py          # Streamlit UI
+│   ├── backend/api.py          # FastAPI REST API & Static Serving
+│   ├── frontend/index.html     # Vanilla HTML/JS UI
 │   ├── core/ai_agent.py        # Custom LangGraph StateGraph agent
 │   ├── config/settings.py      # Environment & model config
 │   └── common/                 # Logger & custom exceptions
@@ -241,4 +243,4 @@ multi-ai-agent-gcp/
 
 ---
 
-**Built by Farhan with ❤️ using Groq, Tavily, LangChain, LangGraph, FastAPI, and Streamlit**
+**Built by Farhan with ❤️ using Groq, Tavily, LangChain, LangGraph, and FastAPI**

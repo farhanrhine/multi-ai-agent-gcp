@@ -1,7 +1,7 @@
 [project]
 name = "multi-ai-agent-gcp"
 version = "0.1.0"
-description = "Multi-AI Agent using Groq LLM and Tavily Search with FastAPI backend and Streamlit frontend - Deployable on GCP Cloud Run"
+description = "Multi-AI Agent using Groq LLM and Tavily Search with FastAPI backend and Vanilla HTML SFA frontend - Deployable on GCP Cloud Run"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -13,6 +13,5 @@ dependencies = [
     "langgraph>=1.0.8",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.1",
-    "streamlit>=1.54.0",
     "uvicorn>=0.40.0",
 ]

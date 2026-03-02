@@ -14,8 +14,8 @@ from app.config.settings import settings
 # ──────────────────────────────────────────────
 # Stream markers (shared with frontend via import)
 # ──────────────────────────────────────────────
-REASONING_START = "\x00WSEARCH_START\x00"
-REASONING_END   = "\x00WSEARCH_END\x00"
+REASONING_START = "<wsearch>"
+REASONING_END   = "</wsearch>"
 
 
 # ──────────────────────────────────────────────
