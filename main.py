@@ -27,6 +27,10 @@ def run_backend():
             check=True,
             cwd=PROJECT_ROOT
         )
+    except subprocess.CalledProcessError:
+        pass  # Process was terminated
+    except KeyboardInterrupt:
+        pass
     except Exception as e:
         logger.error("Problem with backend service")
         raise CustomException("Failed to start backend", e)
@@ -45,6 +49,10 @@ def run_frontend():
             cwd=PROJECT_ROOT,
             env=env
         )
+    except subprocess.CalledProcessError:
+        pass  # Process was terminated
+    except KeyboardInterrupt:
+        pass
     except Exception as e:
         logger.error("Problem with frontend service")
         raise CustomException("Failed to start frontend", e)
@@ -61,8 +69,16 @@ def main():
     time.sleep(2)
 
     # Run frontend in the main thread
-    run_frontend()
+    try:
+        run_frontend()
+    except KeyboardInterrupt:
+        logger.info("Application stopped by user")
+    finally:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)

@@ -12,6 +12,7 @@ import requests
 from app.config.settings import settings
 from app.common.logger import get_logger
 from app.common.custom_exception import CustomException
+from app.core.ai_agent import REASONING_START, REASONING_END
 
 logger = get_logger(__name__)
 
@@ -38,6 +39,27 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
+    
+    /* Hide the default Streamlit expander arrow icon to avoid text overlap with emojis */
+    .stExpander summary svg,
+    .stExpander summary [data-testid="stIconMaterial"] {
+        display: none !important;
+    }
+
+    /* Keep the SVG text hidden in case it's what overlaps */
+    .stExpander summary .stIcon {
+        display: none !important;
+    }
+    
+    /* Make sure expander headers align nicely given we hid the default arrow */
+    .stExpander summary p {
+        margin-left: 0.5rem;
+    }
+    
+    /* Some Streamlit versions render expander icons as literal text span. Hide the specific span containing "arrow_right" etc. */
+    .stExpander summary span.material-symbols-rounded {
+        display: none !important;
+    }
 
     /* Main container */
     .block-container {
@@ -240,64 +262,123 @@ if st.button("⚡ Ask Agent") and user_query.strip():
             unsafe_allow_html=True
         )
 
-        # Inject real-time auto-scroll script BEFORE starting the stream
-        st.components.v1.html(
-            """
-            <script>
-            // Use a function that tries multiple known Streamlit scroll container selectors
-            const autoScroll = () => {
-                const selectors = ['.stAppViewMain', '.main', 'section.main', '.stMain'];
-                for (const selector of selectors) {
-                    const container = window.parent.document.querySelector(selector);
-                    if (container) {
-                        container.scrollTo({
-                            top: container.scrollHeight,
-                            behavior: 'auto' // 'auto' is faster and more reliable than 'smooth' during rapid updates
-                        });
-                    }
-                }
-            };
 
-            // Setup MutationObserver on the parent document body to catch new tokens
-            const observer = new MutationObserver(() => {
-                autoScroll();
-            });
-
-            observer.observe(window.parent.document.body, {
-                childList: true,
-                subtree: true
-            });
-
-            // Initial scroll
-            autoScroll();
-
-            // Loop a few times just in case for the first few tokens
-            let count = 0;
-            const interval = setInterval(() => {
-                autoScroll();
-                if (++count > 10) clearInterval(interval);
-            }, 500);
-
-            // Cleanup after 1 minute (max stream duration expectation)
-            setTimeout(() => {
-                observer.disconnect();
-                clearInterval(interval);
-            }, 60000);
-            </script>
-            """,
-            height=0
-        )
 
         # Stream the response token by token
         response = requests.post(STREAM_URL, json=payload, stream=True, timeout=120)
 
         if response.status_code == 200:
-            def token_generator():
-                for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
-                    if chunk:
-                        yield chunk
+            top_container = st.container()
+            ws_container = top_container.container()
+            think_container = top_container.container()
+            
+            # Temporary pill shown ONLY while the tool is running
+            tool_status = st.empty()
 
-            st.write_stream(token_generator())
+            reasoning_blocks: list = []
+            state = {"in_reasoning": False, "current_reasoning": "", "buf": ""}
+            RS = REASONING_START
+            RE = REASONING_END
+
+            def filtered_generator():
+                """Strip REASONING markers; yield only main content tokens.
+                Updates tool_status or streams thought process live."""
+                think_expander = None
+                think_stream = None
+                
+                for raw_chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+                    if not raw_chunk:
+                        continue
+                    state["buf"] += raw_chunk
+
+                    changed = True
+                    while changed:
+                        changed = False
+                        if not state["in_reasoning"]:
+                            idx_ws = state["buf"].find(RS)
+                            idx_th = state["buf"].find("<think>")
+                            
+                            first_idx = -1
+                            is_ws = False
+                            if idx_ws != -1 and idx_th != -1:
+                                if idx_ws < idx_th:
+                                    first_idx, is_ws = idx_ws, True
+                                else:
+                                    first_idx, is_ws = idx_th, False
+                            elif idx_ws != -1:
+                                first_idx, is_ws = idx_ws, True
+                            elif idx_th != -1:
+                                first_idx, is_ws = idx_th, False
+
+                            if first_idx != -1:
+                                if first_idx > 0:
+                                    yield state["buf"][:first_idx]
+                                
+                                if is_ws:
+                                    state["buf"] = state["buf"][first_idx + len(RS):]
+                                    state["in_reasoning"] = "ws"
+                                    state["current_reasoning"] = ""
+                                    tool_status.markdown(
+                                        '<span style="background:#fef9c3;color:#92400e;'
+                                        'padding:0.25rem 0.75rem;border-radius:20px;'
+                                        'font-size:0.82rem;font-weight:600;">'
+                                        '🔍 Searching the web…</span>',
+                                        unsafe_allow_html=True
+                                    )
+                                else:
+                                    state["buf"] = state["buf"][first_idx + len("<think>"):]
+                                    state["in_reasoning"] = "think"
+                                    state["current_reasoning"] = ""
+                                    if think_expander is None:
+                                        think_expander = think_container.expander("🧠 Model Thought Process", expanded=False)
+                                        think_stream = think_expander.empty()
+                                changed = True
+                            else:
+                                hold = max(len(RS), len("<think>")) - 1
+                                if len(state["buf"]) > hold:
+                                    yield state["buf"][:-hold]
+                                    state["buf"] = state["buf"][-hold:]
+                        else:
+                            end_marker = RE if state["in_reasoning"] == "ws" else "</think>"
+                            idx = state["buf"].find(end_marker)
+                            
+                            if idx != -1:
+                                block_content = state["buf"][:idx]
+                                state["current_reasoning"] += block_content
+                                
+                                if state["in_reasoning"] == "ws":
+                                    reasoning_blocks.append(state["current_reasoning"])
+                                    tool_status.empty()
+                                else:
+                                    if think_stream:
+                                        think_stream.markdown(state["current_reasoning"].replace("$", "\\$"))
+                                
+                                state["buf"] = state["buf"][idx + len(end_marker):]
+                                state["in_reasoning"] = False
+                                changed = True
+                            else:
+                                hold = len(end_marker) - 1
+                                if len(state["buf"]) > hold:
+                                    piece = state["buf"][:-hold]
+                                    state["current_reasoning"] += piece
+                                    state["buf"] = state["buf"][-hold:]
+                                    if state["in_reasoning"] == "think" and think_stream:
+                                        think_stream.markdown(state["current_reasoning"].replace("$", "\\$") + "▌")
+
+                if state["buf"] and not state["in_reasoning"]:
+                    yield state["buf"]
+
+            # Response streams here
+            st.write_stream(filtered_generator())
+
+            # ── Expander for Web Search appears ABOVE the response via ws_container ──
+            if reasoning_blocks:
+                with ws_container.expander("🔍 Web Search was used · View Details", expanded=False):
+                    for i, block in enumerate(reasoning_blocks):
+                        if i > 0:
+                            st.divider()
+                        st.markdown(block)
+
             logger.info("Successfully streamed response from backend")
         else:
             logger.error(f"Backend error: {response.status_code}")
