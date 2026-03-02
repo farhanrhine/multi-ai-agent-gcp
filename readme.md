@@ -6,15 +6,16 @@ A multi-AI agent application powered by a **custom LangGraph StateGraph** agent 
 
 ## 🌟 Features
 
-- ✨ **Multi-Model Support** — Switch between Groq models (Qwen, Llama)
-- 🔍 **Web Search Integration** — Tavily Search for real-time information retrieval
-- 🏗️ **Agent Architecture** — Custom LangGraph `StateGraph` with nodes, edges & conditional routing
-- 🌊 **Real-time Streaming** — Token-by-token response display
-- 📜 **Auto-scroll** — Smooth auto-scrolling during response generation
-- ⚡ **FastAPI Backend & SFA** — REST API and Single-File HTML App on port 9999
-- 🐳 **Docker Ready** — Multi-stage optimized builds
-- ☁️ **GCP Cloud Run** — Cloud deployment
-- 🔌 **CI/CD** — Jenkins + SonarQube
+- ✨ **Seamless Multi-Model Support** — Toggle between high-performance Groq models (Qwen, Llama)
+- 🔍 **Deep Web Search** — Integrated Tavily Search for real-time, factual information retrieval
+- 🏗️ **Intelligent Agent Architecture** — Custom LangGraph `StateGraph` with conditional routing and tool awareness
+- 🧠 **Unified Reasoning Blocks** — Consolidated "Model Thought Process" that combines logic and search results in a clean, expandable UI
+- 🌊 **Real-time Streaming** — ultra-fast token-by-token response generation
+- 🎨 **Premium UI/UX** — Modern, glassmorphism-inspired design with Inter typography and smooth micro-animations
+- 📜 **Advanced Markdown Rendering** — GFM-compliant rendering with syntax highlighting and professional spacing
+- ⚡ **FastAPI Backend & SFA** — Optimized REST API serving a high-performance Single-File Application
+- 🐳 **Docker-Optimized** — Multi-stage builds for minimal production footprint
+- ☁️ **GCP & Jenkins Ready** — Enterprise-grade CI/CD and Cloud Run deployment
 
 ---
 
@@ -24,20 +25,27 @@ A multi-AI agent application powered by a **custom LangGraph StateGraph** agent 
 
 ```mermaid
 flowchart TD
-    A[👤 User] -->|Query + Model| B[🎨 Single-File HTML UI\nPort 9999]
+    A[👤 User] -->|Query + Model| B[🎨 Single-File UI\nFastAPI Serving]
     B -->|POST /chat/stream| C[⚡ FastAPI Backend]
+    
+    subgraph Stream Environment [Real-time Token Stream]
     C -->|Build & Compile| D[🔧 StateGraph]
 
-    subgraph LangGraph Agent
-        D --> E["🧠 llm_node\ninit_chat_model + bind_tools"]
+    subgraph LangGraph Agent [Unified Reasoning Engine]
+        D --> E["🧠 llm_node\nReasoning + Content"]
         E --> F{should_continue?}
         F -->|tool_calls exist| G["🔍 tool_node\nTavily Search"]
         G -->|results| E
         F -->|no tool_calls| H[END]
     end
+    
+    E -.->|Thinking Tokens| I["📜 Unified Thought Box\n&lt;thought&gt; markers"]
+    G -.->|Search Findings| I
+    E -.->|Answer Tokens| J["💬 Final Response\nMarkdown Render"]
+    end
 
-    H -->|AI Response| C
-    C -->|Stream| B
+    I --> B
+    J --> B
     B -->|Display| A
 
     style A fill:#4CAF50,color:#fff
@@ -48,6 +56,8 @@ flowchart TD
     style F fill:#FF5722,color:#fff
     style G fill:#00BCD4,color:#fff
     style H fill:#607D8B,color:#fff
+    style I fill:#8b5cf6,color:#fff
+    style J fill:#10b981,color:#fff
 ```
 
 ### CI/CD Pipeline
@@ -214,7 +224,7 @@ docker push us-central1-docker.pkg.dev/YOUR_PROJECT_ID/multi-ai-agent/multi-ai-a
 
 gcloud run deploy multi-ai-agent-service \
   --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/multi-ai-agent/multi-ai-agent:latest \
-  --region us-central1 --allow-unauthenticated --port 9999 \
+  --region us-central1 --allow-unauthenticated --port 8501 \
   --memory 2Gi --cpu 2 \
   --set-env-vars GROQ_API_KEY=xxx,TAVILY_API_KEY=xxx
 ```
