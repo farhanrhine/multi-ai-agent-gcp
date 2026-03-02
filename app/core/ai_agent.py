@@ -14,8 +14,8 @@ from app.config.settings import settings
 # ──────────────────────────────────────────────
 # Stream markers (shared with frontend via import)
 # ──────────────────────────────────────────────
-REASONING_START = "<wsearch>"
-REASONING_END   = "</wsearch>"
+REASONING_START = "<thought>"
+REASONING_END   = "</thought>"
 
 
 # ──────────────────────────────────────────────
@@ -159,17 +159,17 @@ def stream_response_from_ai_agents(llm_id: str, query: list, allow_search: bool,
                 reasoning = chunk.additional_kwargs.get("reasoning_content")
                 if reasoning:
                     if not has_started_reasoning:
-                        yield "<think>\n"
+                        yield REASONING_START
                         has_started_reasoning = True
                     yield reasoning
 
                 # ── Collect streaming tool-call argument chunks ──
                 tool_call_chunks = getattr(chunk, "tool_call_chunks", [])
                 
-                # Close the think tag if we move past reasoning to tool calls or content
-                if has_started_reasoning and (tool_call_chunks or chunk.content):
-                    yield "\n</think>\n\n"
-                    has_started_reasoning = False
+                # If we have a tool call, we should ensure the thought block is open if it isn't already
+                if tool_call_chunks and not has_started_reasoning:
+                    yield REASONING_START
+                    has_started_reasoning = True
 
                 for tc_chunk in tool_call_chunks:
                     idx = tc_chunk.get("index", 0)
@@ -180,12 +180,16 @@ def stream_response_from_ai_agents(llm_id: str, query: list, allow_search: bool,
 
                 # ── Yield normal content tokens ──
                 if chunk.content:
+                    if has_started_reasoning:
+                        yield REASONING_END
+                        has_started_reasoning = False
                     yield chunk.content
 
             elif isinstance(chunk, ToolMessage):
-                if has_started_reasoning:
-                    yield "\n</think>\n\n"
-                    has_started_reasoning = False
+                # Ensure the thought block is open if it isn't (though usually it is from the previous AIMessageChunk)
+                if not has_started_reasoning:
+                    yield REASONING_START
+                    has_started_reasoning = True
 
                 # ── Build a reasoning block to send to the frontend ──
                 queries_md = ""
@@ -229,16 +233,18 @@ def stream_response_from_ai_agents(llm_id: str, query: list, allow_search: bool,
                     # Format as markdown quote to look nice
                     formatted_results = "> " + raw_str[:600] + ("…" if len(raw_str) > 600 else "")
 
-                reasoning = (
-                    f"### 🔍 Web Search\n\n"
+                reasoning_update = (
+                    f"\n\n#### 🔍 Web Search Results\n"
                     f"{queries_md}"
-                    f"**Results:**\n"
-                    f"{formatted_results}"
+                    f"{formatted_results}\n"
                 )
-                yield REASONING_START + reasoning + REASONING_END
+                yield reasoning_update
 
                 # Reset for the next potential tool call
                 pending_tool_calls = {}
+
+        if has_started_reasoning:
+            yield REASONING_END
 
     except Exception as e:
         yield f"\n\nError: {str(e)}"

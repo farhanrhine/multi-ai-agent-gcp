@@ -241,6 +241,41 @@
         .assistant code {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: #ef4444;
+        }
+
+        .assistant pre code {
+            padding: 0;
+            background: transparent;
+            color: inherit;
+        }
+
+        .assistant h1,
+        .assistant h2,
+        .assistant h3 {
+            margin: 1.5rem 0 0.75rem 0;
+            color: #1e293b;
+        }
+
+        .assistant p {
+            margin-bottom: 1rem;
+        }
+
+        .assistant ul,
+        .assistant ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .assistant li {
+            margin-bottom: 0.4rem;
+        }
+
+        .assistant li strong {
+            color: #1e293b;
         }
 
         /* Expander logic for reasoning / think blocks */
@@ -274,11 +309,15 @@
 
         .reasoning-content {
             padding: 1rem;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             color: #334155;
             background: #fff;
-            white-space: pre-wrap;
             border-top: 1px solid #e2e8f0;
+            overflow-x: auto;
+        }
+
+        .reasoning-content p {
+            margin-bottom: 0.75rem;
         }
 
         .reasoning-content blockquote {
@@ -455,8 +494,8 @@
 
     <script>
         // Constants matching python backend markers
-        const REASONING_START = "<wsearch>";
-        const REASONING_END = "</wsearch>";
+        const REASONING_START = "<thought>";
+        const REASONING_END = "</thought>";
 
         const chatWindow = document.getElementById('chat-window');
         const userInput = document.getElementById('user-input');
@@ -474,10 +513,12 @@
         // Initialize marked
         marked.setOptions({
             gfm: true,
-            breaks: true,
+            breaks: false,
             highlight: function (code, lang) {
-                const language = hljs.getLanguage(lang) ? lang : 'python';
-                return hljs.highlight(code, { language }).value;
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
             }
         });
 
@@ -542,8 +583,9 @@
                 const decoder = new TextDecoder("utf-8");
 
                 let buf = "";
-                let inReasoning = false;     // Can be "ws" or "think" or false
+                let inReasoning = false;
                 let mainContent = "";
+                let reasoningBuf = "";
 
                 // Live DOM elements for stream parsing
                 let liveThinkDetails = null;
@@ -562,109 +604,67 @@
                     while (changed) {
                         changed = false;
                         if (!inReasoning) {
-                            const idx_ws = buf.indexOf(REASONING_START);
-                            const idx_th = buf.indexOf("<think>");
+                            const idx = buf.indexOf(REASONING_START);
 
-                            let first_idx = -1;
-                            let is_ws = false;
-
-                            if (idx_ws !== -1 && idx_th !== -1) {
-                                if (idx_ws < idx_th) { first_idx = idx_ws; is_ws = true; }
-                                else { first_idx = idx_th; is_ws = false; }
-                            } else if (idx_ws !== -1) { first_idx = idx_ws; is_ws = true; }
-                            else if (idx_th !== -1) { first_idx = idx_th; is_ws = false; }
-
-                            if (first_idx !== -1) {
+                            if (idx !== -1) {
                                 // Flush before reasoning
-                                if (first_idx > 0) {
-                                    textBuf += buf.substring(0, first_idx);
+                                if (idx > 0) {
+                                    textBuf += buf.substring(0, idx);
                                     mainContent += marked.parse(textBuf);
-                                    textBuf = "";
-                                    contentDiv.innerHTML = mainContent + (liveThinkDetails ? liveThinkDetails.outerHTML : '');
                                 }
 
-                                if (is_ws) {
-                                    buf = buf.substring(first_idx + REASONING_START.length);
-                                    inReasoning = "ws";
-                                } else {
-                                    buf = buf.substring(first_idx + "<think>".length);
-                                    inReasoning = "think";
+                                buf = buf.substring(idx + REASONING_START.length);
+                                reasoningBuf = "";
+                                inReasoning = true;
 
-                                    // Construct an expander
+                                // Construct or reuse an expander
+                                if (!liveThinkDetails) {
                                     const details = document.createElement('details');
                                     details.className = 'reasoning';
-                                    details.innerHTML = `<summary><span class="spinner" style="border-width: 2px; border-color: rgba(99,102,241,0.3); border-top-color: #6366f1; width: 14px; height: 14px; margin-right: 0.5rem;"></span> Model Thought Process (Streaming...)</summary><div class="reasoning-content"></div>`;
+                                    details.open = true; // Auto-open while streaming
+                                    details.innerHTML = `<summary><span class="spinner" style="border-width: 2px; border-color: rgba(99,102,241,0.3); border-top-color: #6366f1; width: 14px; height: 14px; margin-right: 0.5rem;"></span> Model Thought Process (Streaming...)</summary><div class="reasoning-content" style="white-space: pre-wrap;"></div>`;
                                     liveThinkDetails = details;
                                     liveThinkContent = details.querySelector('.reasoning-content');
                                     contentDiv.appendChild(details);
                                 }
                                 changed = true;
+                                textBuf = ""; // Clear after flush
                             } else {
-                                const hold = Math.max(REASONING_START.length, "<think>".length) - 1;
+                                const hold = REASONING_START.length - 1;
                                 if (buf.length > hold) {
                                     textBuf += buf.substring(0, buf.length - hold);
-                                    // Live preview the partial markdown
                                     contentDiv.innerHTML = mainContent + marked.parse(textBuf);
                                     if (liveThinkDetails) contentDiv.appendChild(liveThinkDetails);
                                     buf = buf.substring(buf.length - hold);
                                 }
                             }
                         } else {
-                            if (inReasoning === "think" && buf.indexOf(REASONING_START) !== -1) {
-                                // Model forgot to close <think> before a tool call, force close it
-                                const ws_idx = buf.indexOf(REASONING_START);
-                                const blockText = buf.substring(0, ws_idx);
+                            const idx = buf.indexOf(REASONING_END);
 
-                                liveThinkContent.innerHTML += marked.parse(blockText);
+                            if (idx !== -1) {
+                                const blockText = reasoningBuf + buf.substring(0, idx);
+
+                                // Finalize the thought block
+                                liveThinkContent.innerHTML = marked.parse(blockText);
+                                liveThinkContent.style.whiteSpace = "normal";
                                 liveThinkDetails.querySelector('summary').innerHTML = '<span class="material-symbols-rounded" style="font-size: 1.1rem; margin-right: 0.5rem; color: #8b5cf6;">neurology</span> Model Thought Process';
+                                // liveThinkDetails.open = false; // Optional: collapse on finish
+
+                                // Bake into mainContent strings
                                 mainContent += liveThinkDetails.outerHTML;
                                 liveThinkDetails = null;
                                 liveThinkContent = null;
+                                reasoningBuf = "";
 
-                                buf = buf.substring(ws_idx); // Do not skip REASONING_START so next loop iteration picks it up
-                                inReasoning = false;
-                                changed = true;
-                                continue;
-                            }
-
-                            const end_marker = inReasoning === "ws" ? REASONING_END : "</think>";
-                            const idx = buf.indexOf(end_marker);
-
-                            if (idx !== -1) {
-                                const blockText = buf.substring(0, idx);
-
-                                if (inReasoning === "ws") {
-                                    const details = document.createElement('details');
-                                    details.className = 'reasoning';
-
-                                    // Strip the extra '### 🔍 Web Search' if it starts with it to avoid duplication since our header covers it
-                                    let cleanedText = blockText.trim();
-                                    if (cleanedText.startsWith('### 🔍 Web Search')) {
-                                        cleanedText = cleanedText.substring('### 🔍 Web Search'.length).trim();
-                                    }
-
-                                    details.innerHTML = `<summary><span class="material-symbols-rounded" style="font-size: 1.1rem; margin-right: 0.5rem; color: #10b981;">globe</span> Web Search Details</summary><div class="reasoning-content">${marked.parse(cleanedText)}</div>`;
-
-                                    // Replace mainContent completely, do not append to it continuously because it gets duplicated
-                                    mainContent += details.outerHTML;
-                                } else {
-                                    liveThinkContent.innerHTML += marked.parse(blockText);
-                                    liveThinkDetails.querySelector('summary').innerHTML = '<span class="material-symbols-rounded" style="font-size: 1.1rem; margin-right: 0.5rem; color: #8b5cf6;">neurology</span> Model Thought Process'; // Done streaming
-
-                                    // Bake it into mainContent so it persists permanently
-                                    mainContent += liveThinkDetails.outerHTML;
-                                    liveThinkDetails = null;
-                                    liveThinkContent = null;
-                                }
-
-                                buf = buf.substring(idx + end_marker.length);
+                                buf = buf.substring(idx + REASONING_END.length);
                                 inReasoning = false;
                                 changed = true;
                             } else {
-                                const hold = end_marker.length - 1;
+                                const hold = REASONING_END.length - 1;
                                 if (buf.length > hold) {
                                     const piece = buf.substring(0, buf.length - hold);
-                                    if (inReasoning === "think" && liveThinkContent) {
+                                    reasoningBuf += piece;
+                                    if (liveThinkContent) {
                                         liveThinkContent.appendChild(document.createTextNode(piece));
                                     }
                                     buf = buf.substring(buf.length - hold);
@@ -675,16 +675,12 @@
                     chatWindow.scrollTop = chatWindow.scrollHeight;
                 }
 
-                // Flush remaining
-                if (buf && !inReasoning) {
-                    textBuf += buf;
+                // Final flush of remaining text
+                let finalStr = mainContent;
+                if (buf || textBuf) {
+                    finalStr += marked.parse(textBuf + buf);
                 }
-
-                if (textBuf) {
-                    mainContent += marked.parse(textBuf);
-                }
-
-                contentDiv.innerHTML = mainContent;
+                contentDiv.innerHTML = finalStr;
 
                 // Final Highlight Code Blocks
                 contentDiv.querySelectorAll('pre code').forEach((el) => {
@@ -693,7 +689,7 @@
 
             } catch (err) {
                 console.error(err);
-                contentDiv.innerHTML = `<span style="color:red;">⚠️ Error connecting to server. Make sure main.py is running.</span>`;
+                contentDiv.innerHTML = `<span style="color:red;">⚠️ Error connecting to server. Error: ${err.message}</span>`;
             } finally {
                 setLoading(false);
             }
