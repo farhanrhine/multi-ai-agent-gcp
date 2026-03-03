@@ -19,7 +19,7 @@ RUN apt-get -o Acquire::ForceIPv4=true update && apt-get -o Acquire::ForceIPv4=t
     && rm -rf /var/lib/apt/lists/*
 
 ## Add uv to PATH
-ENV PATH="/root/.cargo/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 
 ## Copy project files to builder
 COPY pyproject.toml uv.lock* ./
@@ -49,7 +49,7 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 
 ## Copy uv from builder
-COPY --from=builder /root/.cargo/bin/uv /usr/local/bin/uv
+COPY --from=builder /root/.local/bin/uv /usr/local/bin/uv
 
 ## Copy project files
 COPY . .
