@@ -1,4 +1,4 @@
-# 🤖 Multi-AI Agent using Groq & Tavily
+# 🤖 Multi-AI Agent using LangGraph
 
 A multi-AI agent application powered by a **custom LangGraph StateGraph** agent with **Groq LLM** and **Tavily Search**. Built with **FastAPI** serving a **Single-File HTML frontend**, deployable on **GCP Cloud Run** via **Jenkins CI/CD**.
 
