@@ -48,7 +48,7 @@ pipeline {
 
         stage('Build & Push to GCP Artifact Registry') {
             when {
-                expression { env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' }
+                expression { env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main' || env.BRANCH_NAME == 'main' }
             }
             steps {
                 script {
@@ -84,7 +84,7 @@ pipeline {
 
         stage('Deploy to GCP Cloud Run') {
             when {
-                expression { env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' }
+                expression { env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main' || env.BRANCH_NAME == 'main' }
             }
             steps {
                 script {
@@ -110,7 +110,7 @@ pipeline {
                           --image ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
                           --region ${GCP_REGION} \
                           --allow-unauthenticated \
-                          --port 8501 \
+                          --port 9999 \
                           --memory 2Gi \
                           --cpu 2 \
                           --timeout 3600 \
