@@ -5,10 +5,10 @@ pipeline {
         SONAR_PROJECT_KEY = 'multi-ai-agent-gcp' // change this according to your sonarqube project name (stage 2)
         SONAR_SCANNER_HOME = tool 'SonarQube' // change this according to your sonarqube tool name in jenkins (stage 2)
 
-        // // GCP Configuration
-        // GCP_PROJECT_ID = credentials('gcp-project-id')
-        // GCP_REGION = 'us-central1'
-        // GCP_ARTIFACT_REGISTRY = 'multi-ai-agent'
+        // GCP Configuration
+        GCP_PROJECT_ID = credentials('gcp-project-id')
+        GCP_REGION = 'us-central1'
+        GCP_ARTIFACT_REGISTRY = 'multi-ai-agent-repo'
 
         // Common
         IMAGE_TAG = 'latest'
@@ -46,41 +46,41 @@ pipeline {
             }
         }
 
-        // stage('Build & Push to GCP Artifact Registry') {
-        //     when {
-        //         expression { env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main' || env.BRANCH_NAME == 'main' }
-        //     }
-        //     steps {
-        //         script {
-        //             echo '========= Building and Pushing to GCP Artifact Registry ========='
-        //             withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_KEY_FILE')]) {
-        //                 sh '''
-        //                 set +e
+        stage('Build & Push to GCP Artifact Registry') {
+            when {
+                expression { env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main' || env.BRANCH_NAME == 'main' }
+            }
+            steps {
+                script {
+                    echo '========= Building and Pushing to GCP Artifact Registry ========='
+                    withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_KEY_FILE')]) {
+                        sh '''
+                        set +e
 
-        //                 if [ ! -f "${GCP_KEY_FILE}" ]; then
-        //                     echo "GCP credentials not configured, skipping GCP push"
-        //                     exit 0
-        //                 fi
+                        if [ ! -f "${GCP_KEY_FILE}" ]; then
+                            echo "GCP credentials not configured, skipping GCP push"
+                            exit 0
+                        fi
 
-        //                 # Authenticate with GCP
-        //                 gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
-        //                 gcloud config set project ${GCP_PROJECT_ID}
+                        # Authenticate with GCP
+                        gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
+                        gcloud config set project ${GCP_PROJECT_ID}
 
-        //                 # Configure Docker for GCP
-        //                 gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev
+                        # Configure Docker for GCP
+                        gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev
 
-        //                 # Build and push
-        //                 ARTIFACT_REGISTRY="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}"
-        //                 docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-        //                 docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-        //                 docker push ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        # Build and push
+                        ARTIFACT_REGISTRY="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY}"
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
 
-        //                 echo "Successfully pushed to GCP Artifact Registry: ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
-        //                 '''
-        //             } //change `credentialsId`  from jenkins ui (stage 3)
-        //         }
-        //     }
-        // }
+                        echo "Successfully pushed to GCP Artifact Registry: ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+                        '''
+                    } //change `credentialsId`  from jenkins ui (stage 3)
+                }
+            }
+        }
 
         // stage('Deploy to GCP Cloud Run') {
         //     when {
