@@ -28,3 +28,4 @@ class Settings:
 
 settings = Settings()
 
+

@@ -256,3 +256,4 @@ def stream_response_from_ai_agents(llm_id: str, query: list, allow_search: bool,
 
     except Exception as e:
         yield f"\n\nError: {str(e)}"
+

@@ -93,3 +93,4 @@ def chat_stream_endpoint(request: RequestState):
             yield chunk
 
     return StreamingResponse(generate(), media_type="text/plain")
+

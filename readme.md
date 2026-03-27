@@ -1,5 +1,11 @@
 # 🤖 Multi-AI Agent using LangGraph
 
+![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)
+![Google Cloud Run](https://img.shields.io/badge/GoogleCloud-%234285F4.svg?style=flat&logo=google-cloud&logoColor=white)
+![Jenkins CI/CD](https://img.shields.io/badge/jenkins-%232C5263.svg?style=flat&logo=jenkins&logoColor=white)
+
 A multi-AI agent application powered by a **custom LangGraph StateGraph** agent with **Groq LLM** and **Tavily Search**. Built with **FastAPI** serving a **Single-File HTML frontend**, deployable on **GCP Cloud Run** via **Jenkins CI/CD**.
 
 ---
@@ -255,3 +261,4 @@ multi-ai-agent-gcp/
 ---
 
 **Built by Farhan with ❤️ using Groq, Tavily, LangChain, LangGraph, and FastAPI**
+
