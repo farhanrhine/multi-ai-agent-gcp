@@ -70,12 +70,12 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A[📝 Git Push] -->|Webhook| B[🔧 Jenkins]
-    B --> C[📊 SonarQube<br/>Code Analysis]
-    C --> D[🐳 Docker Build<br/>Multi-stage]
-    D --> E[📦 GCP Artifact<br/>Registry]
-    E --> F[☁️ Cloud Run<br/>Deploy]
-    F --> G[🌐 Live App]
+    A["📝 Git Push"] -->|Webhook| B["🔧 Jenkins"]
+    B --> C["📊 SonarQube<br/>Code Analysis"]
+    C --> D["🐳 Docker Build<br/>Multi-stage"]
+    D --> E["📦 GCP Artifact<br/>Registry"]
+    E --> F["☁️ Cloud Run<br/>Deploy"]
+    F --> G["🌐 Live App"]
 
     style A fill:#333,color:#fff
     style B fill:#D24939,color:#fff
